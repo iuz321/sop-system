@@ -5,53 +5,13 @@
 <title>SOP 管理</title>
 
 <style>
-body {
-  font-family: Arial;
-  background: #f5f6fa;
-  padding: 20px;
-}
-
-h1 {
-  margin-bottom: 10px;
-}
-
-a {
-  text-decoration: none;
-  color: blue;
-}
-
-.card {
-  background: white;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 10px;
-}
-
-input, textarea {
-  width: 100%;
-  padding: 8px;
-  margin: 5px 0;
-}
-
-button {
-  padding: 8px 15px;
-  margin-top: 5px;
-  cursor: pointer;
-}
-
-.step {
-  border: 1px dashed #ccc;
-  padding: 10px;
-  margin-top: 10px;
-}
-
-img {
-  max-width: 200px;
-  margin-top: 5px;
-  display: block;
-}
+body { font-family: Arial; background:#f5f6fa; padding:20px; }
+.card { background:white; padding:15px; margin-bottom:15px; border-radius:10px; }
+.step { border:1px dashed #ccc; padding:10px; margin-top:10px; }
+input { width:100%; padding:8px; margin:5px 0; }
+button { margin-top:5px; padding:6px 12px; }
+img { max-width:200px; display:block; margin-top:5px; }
 </style>
-
 </head>
 
 <body>
@@ -60,28 +20,21 @@ img {
 <a href="index.html">👉 回首頁</a>
 
 <div id="list"></div>
-
 <button onclick="addSOP()">➕ 新增 SOP</button>
+<br><br>
+<button onclick="save()">💾 儲存</button>
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
-
 let sopData = [];
 
-// =====================
-// 載入資料
-// =====================
 async function load() {
   const res = await fetch(API);
   sopData = await res.json();
   render();
 }
 
-// =====================
-// 畫面
-// =====================
 function render() {
-
   const div = document.getElementById("list");
   div.innerHTML = "";
 
@@ -89,8 +42,8 @@ function render() {
 
     let html = `
     <div class="card">
-      <input value="${sop.title || ""}" onchange="updateTitle(${i}, this.value)">
-      <input value="${sop.category || ""}" placeholder="分類" onchange="updateCategory(${i}, this.value)">
+      <input value="${sop.title || ""}" onchange="sopData[${i}].title=this.value">
+      <input value="${sop.category || ""}" placeholder="分類" onchange="sopData[${i}].category=this.value">
     `;
 
     sop.steps = sop.steps || [];
@@ -98,7 +51,7 @@ function render() {
     sop.steps.forEach((step, j) => {
       html += `
         <div class="step">
-          <input value="${step.text || ""}" onchange="updateStep(${i},${j},this.value)">
+          <input value="${step.text || ""}" onchange="sopData[${i}].steps[${j}].text=this.value">
           
           <input class="imgUrl" value="${step.image || ""}" placeholder="圖片URL">
 
@@ -106,14 +59,14 @@ function render() {
 
           ${step.image ? `<img src="${step.image}">` : ""}
 
-          <button onclick="deleteStep(${i},${j})">刪除步驟</button>
+          <button onclick="deleteStep(${i},${j})">刪除</button>
         </div>
       `;
     });
 
     html += `
       <button onclick="addStep(${i})">➕ 步驟</button>
-      <button onclick="deleteSOP(${i})">🗑 刪除 SOP</button>
+      <button onclick="deleteSOP(${i})">🗑 刪除</button>
     </div>
     `;
 
@@ -121,66 +74,28 @@ function render() {
   });
 }
 
-// =====================
-// CRUD
-// =====================
+// ===== CRUD =====
 function addSOP() {
-  sopData.push({ title: "新SOP", category: "", steps: [] });
+  sopData.push({ title:"新SOP", category:"", steps:[] });
   render();
 }
 
 function deleteSOP(i) {
-  sopData.splice(i, 1);
+  sopData.splice(i,1);
   render();
-}
-
-function updateTitle(i, val) {
-  sopData[i].title = val;
-}
-
-function updateCategory(i, val) {
-  sopData[i].category = val;
 }
 
 function addStep(i) {
-  sopData[i].steps.push({ text: "", image: "" });
+  sopData[i].steps.push({ text:"", image:"" });
   render();
 }
 
-function deleteStep(i, j) {
-  sopData[i].steps.splice(j, 1);
+function deleteStep(i,j) {
+  sopData[i].steps.splice(j,1);
   render();
 }
 
-function updateStep(i, j, val) {
-  sopData[i].steps[j].text = val;
-}
-
-// =====================
-// 💾 儲存
-// =====================
-async function save() {
-
-  // 把 input URL 同步回資料
-  document.querySelectorAll(".card").forEach((card, i) => {
-    card.querySelectorAll(".step").forEach((stepDiv, j) => {
-      const url = stepDiv.querySelector(".imgUrl").value;
-      sopData[i].steps[j].image = url;
-    });
-  });
-
-  await fetch(API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(sopData)
-  });
-
-  alert("✅ 已儲存");
-}
-
-// =====================
-// 🖼 上傳圖片（修正版）
-// =====================
+// ===== 上傳圖片（已修正🔥）=====
 async function uploadImage(input) {
 
   const file = input.files[0];
@@ -195,19 +110,24 @@ async function uploadImage(input) {
       body: formData
     });
 
-    const text = await res.text();
-    console.log("上傳回應:", text);
+    const data = await res.json();
 
-    const data = JSON.parse(text);
+    const stepDiv = input.parentElement;
+    const card = input.closest(".card");
 
-    const urlInput = input.parentElement.querySelector(".imgUrl");
-    urlInput.value = data.url;
+    const i = Array.from(document.querySelectorAll(".card")).indexOf(card);
+    const j = Array.from(card.querySelectorAll(".step")).indexOf(stepDiv);
 
-    // 🔥 即時顯示圖片
-    let img = input.parentElement.querySelector("img");
+    // ⭐⭐ 直接寫資料（關鍵）
+    sopData[i].steps[j].image = data.url;
+
+    // 更新 UI
+    stepDiv.querySelector(".imgUrl").value = data.url;
+
+    let img = stepDiv.querySelector("img");
     if (!img) {
       img = document.createElement("img");
-      input.parentElement.appendChild(img);
+      stepDiv.appendChild(img);
     }
     img.src = data.url;
 
@@ -218,12 +138,20 @@ async function uploadImage(input) {
   }
 }
 
-// =====================
+// ===== 儲存 =====
+async function save() {
+
+  await fetch(API, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(sopData)
+  });
+
+  alert("✅ 已儲存");
+}
+
 load();
 </script>
-
-<br>
-<button onclick="save()">💾 儲存全部</button>
 
 </body>
 </html>
