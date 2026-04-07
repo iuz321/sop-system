@@ -1,37 +1,12 @@
 [
   {
-    "title": "測試3",
+    "title": "測試2",
     "category": "電器",
     "steps": [
       {
-        "text": "第三步",
-        "img": "",
-        "image": ""
-      },
-      {
         "text": "",
         "img": "",
         "image": ""
-      },
-      {
-        "text": "",
-        "img": "",
-        "image": ""
-      },
-      {
-        "text": "",
-        "img": "",
-        "image": ""
-      }
-    ]
-  },
-  {
-    "title": "新SOP3333",
-    "category": "33333",
-    "steps": [
-      {
-        "text": "123",
-        "image": "https://raw.githubusercontent.com/iuz321/sop-system/main/images/img_1775549990950.jpg?t=1775549992305"
       }
     ]
   }
