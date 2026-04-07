@@ -23,5 +23,28 @@
         "image": ""
       }
     ]
+  },
+  {
+    "title": "新SOP",
+    "category": "組立",
+    "steps": []
+  },
+  {
+    "title": "鑽孔",
+    "category": "打樣",
+    "steps": [
+      {
+        "text": "開電",
+        "image": ""
+      },
+      {
+        "text": "關電",
+        "image": ""
+      },
+      {
+        "text": "",
+        "image": ""
+      }
+    ]
   }
 ]
