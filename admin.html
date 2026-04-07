@@ -5,9 +5,8 @@
 <title>SOP 管理</title>
 
 <style>
-body { font-family: Arial; background:#f5f6fa; padding:20px; }
+body { font-family: Arial; padding:20px; background:#f5f6fa; }
 .card { background:white; padding:15px; margin-bottom:15px; border-radius:10px; }
-.step { border:1px dashed #ccc; padding:10px; margin-top:10px; }
 button { margin:5px; }
 </style>
 </head>
@@ -15,46 +14,44 @@ button { margin:5px; }
 <body>
 
 <h1>🛠 SOP 管理</h1>
-<a href="index.html">👉 回首頁</a>
 
-<!-- 分類 -->
 <div id="categoryBar"></div>
-
-<!-- SOP列表 -->
 <div id="list"></div>
 
-<button onclick="addSOP()">➕ 新增 SOP</button>
 <button onclick="save()">💾 儲存</button>
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
 
-// ⭐ 預設分類
 const categories = ["組立","電器","測機","整備","打樣"];
 
-let sopData = [];
-let currentCategory = "組立";
+let data = {};
+let current = "組立";
 
-// ===== 載入 =====
+// ===== 初始化 =====
 async function load() {
   const res = await fetch(API);
-  sopData = await res.json();
+  data = await res.json();
+
+  // ⭐ 保證每個分類存在
+  categories.forEach(c => {
+    if (!data[c]) data[c] = [];
+  });
 
   renderCategories();
   render();
 }
 
-// ===== 分類按鈕 =====
+// ===== 分類 =====
 function renderCategories() {
-
   const div = document.getElementById("categoryBar");
   div.innerHTML = "";
 
-  categories.forEach(cat => {
+  categories.forEach(c => {
     const btn = document.createElement("button");
-    btn.innerText = cat;
+    btn.innerText = c;
     btn.onclick = () => {
-      currentCategory = cat;
+      current = c;
       render();
     };
     div.appendChild(btn);
@@ -67,77 +64,41 @@ function render() {
   const div = document.getElementById("list");
   div.innerHTML = "";
 
-  sopData
-    .filter(s => (s.category || "組立") === currentCategory)
-    .forEach((sop, i) => {
+  data[current].forEach((sop, i) => {
 
-      const realIndex = sopData.indexOf(sop);
-
-      let html = `
+    div.innerHTML += `
       <div class="card">
         <input value="${sop.title || ""}" 
-          onchange="sopData[${realIndex}].title=this.value">
+          onchange="data['${current}'][${i}].title=this.value">
 
-        <p>📂 ${currentCategory}</p>
-      `;
-
-      sop.steps = sop.steps || [];
-
-      sop.steps.forEach((step, j) => {
-        html += `
-          <div class="step">
-            <input value="${step.text || ""}" 
-              onchange="sopData[${realIndex}].steps[${j}].text=this.value">
-
-            ${step.image ? `<img src="${step.image}" width="150">` : ""}
-
-            <button onclick="deleteStep(${realIndex},${j})">刪除步驟</button>
-          </div>
-        `;
-      });
-
-      html += `
-        <button onclick="addStep(${realIndex})">➕ 步驟</button>
-        <button onclick="deleteSOP(${realIndex})">🗑 刪除</button>
+        <button onclick="deleteSOP(${i})">刪除</button>
       </div>
-      `;
+    `;
+  });
 
-      div.innerHTML += html;
-    });
+  div.innerHTML += `<button onclick="addSOP()">➕ 新增</button>`;
 }
 
 // ===== CRUD =====
 function addSOP() {
-  sopData.push({
-    title:"新SOP",
-    category: currentCategory,
-    steps:[]
-  });
+  data[current].push({ title:"新SOP", steps:[] });
   render();
 }
 
 function deleteSOP(i) {
-  sopData.splice(i,1);
-  render();
-}
-
-function addStep(i) {
-  sopData[i].steps.push({ text:"", image:"" });
-  render();
-}
-
-function deleteStep(i,j) {
-  sopData[i].steps.splice(j,1);
+  data[current].splice(i,1);
   render();
 }
 
 // ===== 儲存 =====
 async function save() {
+
   await fetch(API, {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(sopData)
+    body: JSON.stringify({ __replace: data })
   });
+
   alert("✅ 已儲存");
 }
 
