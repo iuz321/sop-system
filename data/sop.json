@@ -46,5 +46,19 @@
         "image": ""
       }
     ]
+  },
+  {
+    "title": "TM",
+    "category": "打樣",
+    "steps": [
+      {
+        "text": "放真",
+        "image": ""
+      },
+      {
+        "text": "收真",
+        "image": ""
+      }
+    ]
   }
 ]
