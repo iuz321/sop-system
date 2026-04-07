@@ -2,7 +2,12 @@
   {
     "title": "測試2",
     "category": "電器",
-    "steps": []
+    "steps": [
+      {
+        "text": "第二步",
+        "img": ""
+      }
+    ]
   },
   {
     "title": "測試",
