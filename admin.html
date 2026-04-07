@@ -3,136 +3,227 @@
 <head>
 <meta charset="UTF-8">
 <title>SOP 管理</title>
+
 <style>
-body { font-family: Arial; background:#f5f5f5; padding:20px; }
-.card { background:white; padding:15px; margin:10px 0; border-radius:10px; }
-.step { border:1px dashed #ccc; padding:10px; margin:5px 0; }
-input { width:100%; padding:8px; margin:5px 0; }
+body {
+  font-family: Arial;
+  background: #f5f6fa;
+  padding: 20px;
+}
+
+h1 {
+  margin-bottom: 10px;
+}
+
+a {
+  text-decoration: none;
+  color: blue;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+}
+
+button {
+  padding: 8px 15px;
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+.step {
+  border: 1px dashed #ccc;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+img {
+  max-width: 200px;
+  margin-top: 5px;
+  display: block;
+}
 </style>
+
 </head>
 
 <body>
 
-<h1>SOP 管理</h1>
+<h1>🛠 SOP 管理</h1>
 <a href="index.html">👉 回首頁</a>
 
-<div class="card">
-  <input id="title" placeholder="SOP名稱">
-  <input id="category" placeholder="分類">
-  <div id="steps"></div>
-  <button onclick="addStep()">＋步驟</button>
-  <button onclick="saveSOP()">儲存</button>
-</div>
-
 <div id="list"></div>
+
+<button onclick="addSOP()">➕ 新增 SOP</button>
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
 
-let editIndex = -1;
+let sopData = [];
 
-function addStep(text="", img="") {
-  const div = document.createElement("div");
-  div.className = "step";
-
-  div.innerHTML = `
-    <input value="${text}" placeholder="步驟說明">
-    <input class="imgUrl" value="${img}" placeholder="圖片URL">
-    <input type="file" onchange="uploadImage(this)">
-  `;
-
-  document.getElementById("steps").appendChild(div);
+// =====================
+// 載入資料
+// =====================
+async function load() {
+  const res = await fetch(API);
+  sopData = await res.json();
+  render();
 }
 
+// =====================
+// 畫面
+// =====================
+function render() {
+
+  const div = document.getElementById("list");
+  div.innerHTML = "";
+
+  sopData.forEach((sop, i) => {
+
+    let html = `
+    <div class="card">
+      <input value="${sop.title || ""}" onchange="updateTitle(${i}, this.value)">
+      <input value="${sop.category || ""}" placeholder="分類" onchange="updateCategory(${i}, this.value)">
+    `;
+
+    sop.steps = sop.steps || [];
+
+    sop.steps.forEach((step, j) => {
+      html += `
+        <div class="step">
+          <input value="${step.text || ""}" onchange="updateStep(${i},${j},this.value)">
+          
+          <input class="imgUrl" value="${step.image || ""}" placeholder="圖片URL">
+
+          <input type="file" onchange="uploadImage(this)">
+
+          ${step.image ? `<img src="${step.image}">` : ""}
+
+          <button onclick="deleteStep(${i},${j})">刪除步驟</button>
+        </div>
+      `;
+    });
+
+    html += `
+      <button onclick="addStep(${i})">➕ 步驟</button>
+      <button onclick="deleteSOP(${i})">🗑 刪除 SOP</button>
+    </div>
+    `;
+
+    div.innerHTML += html;
+  });
+}
+
+// =====================
+// CRUD
+// =====================
+function addSOP() {
+  sopData.push({ title: "新SOP", category: "", steps: [] });
+  render();
+}
+
+function deleteSOP(i) {
+  sopData.splice(i, 1);
+  render();
+}
+
+function updateTitle(i, val) {
+  sopData[i].title = val;
+}
+
+function updateCategory(i, val) {
+  sopData[i].category = val;
+}
+
+function addStep(i) {
+  sopData[i].steps.push({ text: "", image: "" });
+  render();
+}
+
+function deleteStep(i, j) {
+  sopData[i].steps.splice(j, 1);
+  render();
+}
+
+function updateStep(i, j, val) {
+  sopData[i].steps[j].text = val;
+}
+
+// =====================
+// 💾 儲存
+// =====================
+async function save() {
+
+  // 把 input URL 同步回資料
+  document.querySelectorAll(".card").forEach((card, i) => {
+    card.querySelectorAll(".step").forEach((stepDiv, j) => {
+      const url = stepDiv.querySelector(".imgUrl").value;
+      sopData[i].steps[j].image = url;
+    });
+  });
+
+  await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(sopData)
+  });
+
+  alert("✅ 已儲存");
+}
+
+// =====================
+// 🖼 上傳圖片（修正版）
+// =====================
 async function uploadImage(input) {
+
   const file = input.files[0];
+  if (!file) return;
+
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(API + "/upload", {
-    method: "POST",
-    body: formData
-  });
+  try {
+    const res = await fetch(API + "/upload", {
+      method: "POST",
+      body: formData
+    });
 
-  const data = await res.json();
-  input.parentElement.querySelector(".imgUrl").value = data.url;
-}
+    const text = await res.text();
+    console.log("上傳回應:", text);
 
-async function saveSOP() {
+    const data = JSON.parse(text);
 
-  const title = document.getElementById("title").value;
-  const category = document.getElementById("category").value;
+    const urlInput = input.parentElement.querySelector(".imgUrl");
+    urlInput.value = data.url;
 
-  const steps = [];
-  document.querySelectorAll(".step").forEach(div => {
-    const inputs = div.querySelectorAll("input");
-    steps.push({ text: inputs[0].value, img: inputs[1].value });
-  });
+    // 🔥 即時顯示圖片
+    let img = input.parentElement.querySelector("img");
+    if (!img) {
+      img = document.createElement("img");
+      input.parentElement.appendChild(img);
+    }
+    img.src = data.url;
 
-  const res = await fetch(API);
-  let data = await res.json();
+    alert("✅ 上傳成功");
 
-  if (editIndex === -1) {
-    data.push({ title, category, steps });
-  } else {
-    data[editIndex] = { title, category, steps };
+  } catch (err) {
+    alert("❌ 上傳失敗：" + err.message);
   }
-
-  await fetch(API, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ __replace: data })
-  });
-
-  location.reload();
 }
 
-function editSOP(index, item) {
-  editIndex = index;
-
-  document.getElementById("title").value = item.title;
-  document.getElementById("category").value = item.category || "";
-
-  document.getElementById("steps").innerHTML = "";
-
-  item.steps?.forEach(s => addStep(s.text, s.img));
-}
-
-async function deleteSOP(index) {
-  const res = await fetch(API);
-  let data = await res.json();
-
-  data.splice(index, 1);
-
-  await fetch(API, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ __replace: data })
-  });
-
-  location.reload();
-}
-
-async function loadData() {
-  const res = await fetch(API);
-  const data = await res.json();
-
-  const list = document.getElementById("list");
-  list.innerHTML = "";
-
-  data.forEach((item, index) => {
-    list.innerHTML += `
-      <div class="card">
-        <h3>${item.title}</h3>
-        <button onclick='editSOP(${index}, ${JSON.stringify(item)})'>編輯</button>
-        <button onclick="deleteSOP(${index})">刪除</button>
-      </div>
-    `;
-  });
-}
-
-loadData();
+// =====================
+load();
 </script>
+
+<br>
+<button onclick="save()">💾 儲存全部</button>
 
 </body>
 </html>
