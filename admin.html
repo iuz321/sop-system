@@ -8,9 +8,7 @@
 body { font-family: Arial; background:#f5f6fa; padding:20px; }
 .card { background:white; padding:15px; margin-bottom:15px; border-radius:10px; }
 .step { border:1px dashed #ccc; padding:10px; margin-top:10px; }
-input { width:100%; padding:8px; margin:5px 0; }
-button { margin-top:5px; padding:6px 12px; }
-img { max-width:200px; display:block; margin-top:5px; }
+button { margin:5px; }
 </style>
 </head>
 
@@ -19,64 +17,102 @@ img { max-width:200px; display:block; margin-top:5px; }
 <h1>🛠 SOP 管理</h1>
 <a href="index.html">👉 回首頁</a>
 
+<!-- 分類 -->
+<div id="categoryBar"></div>
+
+<!-- SOP列表 -->
 <div id="list"></div>
+
 <button onclick="addSOP()">➕ 新增 SOP</button>
-<br><br>
 <button onclick="save()">💾 儲存</button>
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
-let sopData = [];
 
+// ⭐ 預設分類
+const categories = ["組立","電器","測機","整備","打樣"];
+
+let sopData = [];
+let currentCategory = "組立";
+
+// ===== 載入 =====
 async function load() {
   const res = await fetch(API);
   sopData = await res.json();
+
+  renderCategories();
   render();
 }
 
+// ===== 分類按鈕 =====
+function renderCategories() {
+
+  const div = document.getElementById("categoryBar");
+  div.innerHTML = "";
+
+  categories.forEach(cat => {
+    const btn = document.createElement("button");
+    btn.innerText = cat;
+    btn.onclick = () => {
+      currentCategory = cat;
+      render();
+    };
+    div.appendChild(btn);
+  });
+}
+
+// ===== 畫面 =====
 function render() {
+
   const div = document.getElementById("list");
   div.innerHTML = "";
 
-  sopData.forEach((sop, i) => {
+  sopData
+    .filter(s => (s.category || "組立") === currentCategory)
+    .forEach((sop, i) => {
 
-    let html = `
-    <div class="card">
-      <input value="${sop.title || ""}" onchange="sopData[${i}].title=this.value">
-      <input value="${sop.category || ""}" placeholder="分類" onchange="sopData[${i}].category=this.value">
-    `;
+      const realIndex = sopData.indexOf(sop);
 
-    sop.steps = sop.steps || [];
+      let html = `
+      <div class="card">
+        <input value="${sop.title || ""}" 
+          onchange="sopData[${realIndex}].title=this.value">
 
-    sop.steps.forEach((step, j) => {
-      html += `
-        <div class="step">
-          <input value="${step.text || ""}" onchange="sopData[${i}].steps[${j}].text=this.value">
-          
-          <input class="imgUrl" value="${step.image || ""}" placeholder="圖片URL">
-
-          <input type="file" onchange="uploadImage(this)">
-
-          ${step.image ? `<img src="${step.image}">` : ""}
-
-          <button onclick="deleteStep(${i},${j})">刪除</button>
-        </div>
+        <p>📂 ${currentCategory}</p>
       `;
+
+      sop.steps = sop.steps || [];
+
+      sop.steps.forEach((step, j) => {
+        html += `
+          <div class="step">
+            <input value="${step.text || ""}" 
+              onchange="sopData[${realIndex}].steps[${j}].text=this.value">
+
+            ${step.image ? `<img src="${step.image}" width="150">` : ""}
+
+            <button onclick="deleteStep(${realIndex},${j})">刪除步驟</button>
+          </div>
+        `;
+      });
+
+      html += `
+        <button onclick="addStep(${realIndex})">➕ 步驟</button>
+        <button onclick="deleteSOP(${realIndex})">🗑 刪除</button>
+      </div>
+      `;
+
+      div.innerHTML += html;
     });
-
-    html += `
-      <button onclick="addStep(${i})">➕ 步驟</button>
-      <button onclick="deleteSOP(${i})">🗑 刪除</button>
-    </div>
-    `;
-
-    div.innerHTML += html;
-  });
 }
 
 // ===== CRUD =====
 function addSOP() {
-  sopData.push({ title:"新SOP", category:"", steps:[] });
+  sopData.push({
+    title:"新SOP",
+    category: currentCategory,
+    steps:[]
+  });
   render();
 }
 
@@ -95,58 +131,13 @@ function deleteStep(i,j) {
   render();
 }
 
-// ===== 上傳圖片（已修正🔥）=====
-async function uploadImage(input) {
-
-  const file = input.files[0];
-  if (!file) return;
-
-  const formData = new FormData();
-  formData.append("file", file);
-
-  try {
-    const res = await fetch(API + "/upload", {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await res.json();
-
-    const stepDiv = input.parentElement;
-    const card = input.closest(".card");
-
-    const i = Array.from(document.querySelectorAll(".card")).indexOf(card);
-    const j = Array.from(card.querySelectorAll(".step")).indexOf(stepDiv);
-
-    // ⭐⭐ 直接寫資料（關鍵）
-    sopData[i].steps[j].image = data.url;
-
-    // 更新 UI
-    stepDiv.querySelector(".imgUrl").value = data.url;
-
-    let img = stepDiv.querySelector("img");
-    if (!img) {
-      img = document.createElement("img");
-      stepDiv.appendChild(img);
-    }
-    img.src = data.url;
-
-    alert("✅ 上傳成功");
-
-  } catch (err) {
-    alert("❌ 上傳失敗：" + err.message);
-  }
-}
-
 // ===== 儲存 =====
 async function save() {
-
   await fetch(API, {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify(sopData)
   });
-
   alert("✅ 已儲存");
 }
 
