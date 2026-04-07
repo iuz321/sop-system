@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>SOP 管理</title>
+
+<style>
+body { font-family: Arial; background:#f5f5f5; padding:20px; }
+.card {
+  background:white;
+  padding:15px;
+  margin:10px 0;
+  border-radius:10px;
+}
+input { width:100%; padding:8px; margin:5px 0; }
+button { padding:6px 12px; margin:3px; }
+</style>
+</head>
+
+<body>
+
+<h1>SOP 管理</h1>
+<a href="index.html">👉 回學習頁</a>
+
+<!-- 新增 -->
+<div class="card">
+  <h3>新增 SOP</h3>
+  <input id="title" placeholder="標題">
+  <input id="desc" placeholder="內容">
+  <button onclick="addSOP()">新增</button>
+</div>
+
+<!-- 列表 -->
+<div id="list"></div>
+
+<script>
+
+const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
+
+// 載入
+async function loadData() {
+  const res = await fetch(API);
+  const data = await res.json();
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  data.forEach((item, index) => {
+
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <input value="${item.title}" onchange="updateField(${index}, 'title', this.value)">
+      <input value="${item.desc}" onchange="updateField(${index}, 'desc', this.value)">
+      <button onclick="deleteSOP(${index})">刪除</button>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+// 新增
+async function addSOP() {
+  const title = document.getElementById("title").value;
+  const desc = document.getElementById("desc").value;
+
+  await fetch(API, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ title, desc })
+  });
+
+  loadData();
+}
+
+// 編輯（核心🔥）
+async function updateField(index, key, value) {
+
+  const res = await fetch(API);
+  let data = await res.json();
+
+  data[index][key] = value;
+
+  await fetch(API, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ __replace: data })
+  });
+
+}
+
+// 刪除
+async function deleteSOP(index) {
+
+  const res = await fetch(API);
+  let data = await res.json();
+
+  data.splice(index, 1);
+
+  await fetch(API, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ __replace: data })
+  });
+
+  loadData();
+}
+
+loadData();
+
+</script>
+
+</body>
+</html>
