@@ -1,24 +1,26 @@
-[
-  {
-    "title": "測試2",
-    "category": "電器",
-    "steps": [
-      {
-        "text": "第三步",
-        "img": ""
-      },
-      {
-        "text": "",
-        "img": ""
-      },
-      {
-        "text": "",
-        "img": ""
-      },
-      {
-        "text": "",
-        "img": ""
-      }
-    ]
-  }
-]
+{
+  "__replace": [
+    {
+      "title": "測試2",
+      "category": "電器",
+      "steps": [
+        {
+          "text": "第三步",
+          "img": "https://raw.githubusercontent.com/iuz321/sop-system/main/images/img_1775549850558.jpg?t=1775549851480"
+        },
+        {
+          "text": "",
+          "img": ""
+        },
+        {
+          "text": "",
+          "img": ""
+        },
+        {
+          "text": "",
+          "img": ""
+        }
+      ]
+    }
+  ]
+}
