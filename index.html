@@ -1,43 +1,102 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>SOP 系統</title>
+<meta charset="UTF-8">
+<title>SOP 系統</title>
+
+<style>
+body {
+  font-family: Arial;
+  padding: 20px;
+  background: #f5f5f5;
+}
+
+h1 {
+  margin-bottom: 10px;
+}
+
+.container {
+  max-width: 800px;
+  margin: auto;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+button {
+  padding: 6px 12px;
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+}
+</style>
+
 </head>
+
 <body>
+
+<div class="container">
 
 <h1>SOP 系統</h1>
 
-<button onclick="loadData()">讀取 SOP</button>
+<!-- 新增區 -->
+<div class="card">
+  <h2>新增 SOP</h2>
+  <input id="title" placeholder="標題">
+  <input id="desc" placeholder="內容">
+  <button onclick="addSOP()">新增</button>
+</div>
 
-<hr>
+<!-- 顯示區 -->
+<div id="list"></div>
 
-<h2>新增 SOP</h2>
-
-<input id="title" placeholder="標題"><br><br>
-<input id="desc" placeholder="內容"><br><br>
-
-<button onclick="addSOP()">新增</button>
-
-<hr>
-
-<pre id="output"></pre>
+</div>
 
 <script>
 
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
 
-// 讀取
+// 讀取資料
 async function loadData() {
   const res = await fetch(API);
   const data = await res.json();
-  document.getElementById("output").innerText = JSON.stringify(data, null, 2);
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  data.forEach((item, index) => {
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <h3>${item.title}</h3>
+      <p>${item.desc}</p>
+      <button onclick="deleteSOP(${index})">刪除</button>
+    `;
+
+    list.appendChild(div);
+  });
 }
 
 // 新增
 async function addSOP() {
   const title = document.getElementById("title").value;
   const desc = document.getElementById("desc").value;
+
+  if (!title || !desc) {
+    alert("請填寫完整");
+    return;
+  }
 
   const res = await fetch(API, {
     method: "POST",
@@ -47,11 +106,35 @@ async function addSOP() {
     body: JSON.stringify({ title, desc })
   });
 
-  const result = await res.text();
-  alert(result);
+  alert(await res.text());
 
-  loadData(); // 重新讀取
+  document.getElementById("title").value = "";
+  document.getElementById("desc").value = "";
+
+  loadData();
 }
+
+// ⚠️ 刪除（簡單版：重寫整個JSON）
+async function deleteSOP(index) {
+
+  const res = await fetch(API);
+  let data = await res.json();
+
+  data.splice(index, 1);
+
+  await fetch(API, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ __replace: data })
+  });
+
+  loadData();
+}
+
+// 初始化
+loadData();
 
 </script>
 
