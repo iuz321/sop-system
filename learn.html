@@ -7,7 +7,7 @@
 <style>
 body { font-family: Arial; padding:20px; background:#f9f9f9; }
 .card { background:white; padding:15px; margin-bottom:15px; border-radius:10px; }
-img { max-width:300px; margin-top:5px; }
+button { margin:5px; }
 </style>
 </head>
 
@@ -16,33 +16,62 @@ img { max-width:300px; margin-top:5px; }
 <h1>📖 SOP 學習</h1>
 <a href="index.html">👉 回首頁</a>
 
+<div id="categoryBar"></div>
 <div id="list"></div>
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
 
-async function load() {
+const categories = ["組立","電器","測機","整備","打樣"];
 
+let data = [];
+let currentCategory = "組立";
+
+async function load() {
   const res = await fetch(API);
-  const data = await res.json();
+  data = await res.json();
+
+  renderCategories();
+  render();
+}
+
+function renderCategories() {
+
+  const div = document.getElementById("categoryBar");
+
+  categories.forEach(cat => {
+    const btn = document.createElement("button");
+    btn.innerText = cat;
+    btn.onclick = () => {
+      currentCategory = cat;
+      render();
+    };
+    div.appendChild(btn);
+  });
+}
+
+function render() {
 
   const div = document.getElementById("list");
+  div.innerHTML = "";
 
-  data.forEach(sop => {
+  data
+    .filter(s => (s.category || "組立") === currentCategory)
+    .forEach(sop => {
 
-    let html = `<div class="card"><h2>${sop.title}</h2>`;
+      let html = `<div class="card"><h2>${sop.title}</h2>`;
 
-    (sop.steps || []).forEach(step => {
-      html += `
-        <p>${step.text || ""}</p>
-        ${step.image ? `<img src="${step.image}">` : ""}
-      `;
+      (sop.steps || []).forEach(step => {
+        html += `
+          <p>${step.text || ""}</p>
+          ${step.image ? `<img src="${step.image}" width="200">` : ""}
+        `;
+      });
+
+      html += `</div>`;
+
+      div.innerHTML += html;
     });
-
-    html += `</div>`;
-
-    div.innerHTML += html;
-  });
 }
 
 load();
