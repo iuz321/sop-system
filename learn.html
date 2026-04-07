@@ -5,8 +5,8 @@
 <title>SOP 學習</title>
 
 <style>
-body { font-family: Arial; padding:20px; background:#f9f9f9; }
-.card { background:white; padding:15px; margin-bottom:15px; border-radius:10px; }
+body { font-family: Arial; padding:20px; }
+.card { background:white; padding:15px; margin-bottom:15px; }
 button { margin:5px; }
 </style>
 </head>
@@ -14,7 +14,6 @@ button { margin:5px; }
 <body>
 
 <h1>📖 SOP 學習</h1>
-<a href="index.html">👉 回首頁</a>
 
 <div id="categoryBar"></div>
 <div id="list"></div>
@@ -24,12 +23,16 @@ const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
 
 const categories = ["組立","電器","測機","整備","打樣"];
 
-let data = [];
-let currentCategory = "組立";
+let data = {};
+let current = "組立";
 
 async function load() {
   const res = await fetch(API);
   data = await res.json();
+
+  categories.forEach(c => {
+    if (!data[c]) data[c] = [];
+  });
 
   renderCategories();
   render();
@@ -39,11 +42,11 @@ function renderCategories() {
 
   const div = document.getElementById("categoryBar");
 
-  categories.forEach(cat => {
+  categories.forEach(c => {
     const btn = document.createElement("button");
-    btn.innerText = cat;
+    btn.innerText = c;
     btn.onclick = () => {
-      currentCategory = cat;
+      current = c;
       render();
     };
     div.appendChild(btn);
@@ -55,23 +58,13 @@ function render() {
   const div = document.getElementById("list");
   div.innerHTML = "";
 
-  data
-    .filter(s => (s.category || "組立") === currentCategory)
-    .forEach(sop => {
-
-      let html = `<div class="card"><h2>${sop.title}</h2>`;
-
-      (sop.steps || []).forEach(step => {
-        html += `
-          <p>${step.text || ""}</p>
-          ${step.image ? `<img src="${step.image}" width="200">` : ""}
-        `;
-      });
-
-      html += `</div>`;
-
-      div.innerHTML += html;
-    });
+  data[current].forEach(sop => {
+    div.innerHTML += `
+      <div class="card">
+        <h2>${sop.title}</h2>
+      </div>
+    `;
+  });
 }
 
 load();
