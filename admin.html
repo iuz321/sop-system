@@ -3,20 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <title>SOP 管理</title>
+
 <style>
 body { font-family: Arial; background:#f5f5f5; padding:20px; }
 .card { background:white; padding:15px; margin:10px 0; border-radius:10px; }
 .step { border:1px dashed #ccc; padding:10px; margin:5px 0; }
+input { width:100%; padding:8px; margin:5px 0; }
 </style>
 </head>
 
 <body>
 
-<h1>SOP 管理（圖片版）</h1>
+<h1>SOP 管理</h1>
 <a href="index.html">👉 學習頁</a>
 
 <div class="card">
   <input id="title" placeholder="SOP名稱">
+  <input id="category" placeholder="分類（設備/製程）">
   <div id="steps"></div>
   <button onclick="addStep()">＋步驟</button>
   <button onclick="addSOP()">儲存</button>
@@ -57,8 +60,9 @@ async function uploadImage(input) {
 async function addSOP() {
 
   const title = document.getElementById("title").value;
-  const stepDivs = document.querySelectorAll(".step");
+  const category = document.getElementById("category").value;
 
+  const stepDivs = document.querySelectorAll(".step");
   const steps = [];
 
   stepDivs.forEach(div => {
@@ -72,7 +76,7 @@ async function addSOP() {
   await fetch(API, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ title, steps })
+    body: JSON.stringify({ title, category, steps })
   });
 
   location.reload();
@@ -90,7 +94,7 @@ async function loadData() {
     div.className = "card";
 
     div.innerHTML = `
-      <h3>${item.title}</h3>
+      <h3>${item.title} (${item.category || "未分類"})</h3>
       <button onclick="deleteSOP(${index})">刪除</button>
     `;
 
