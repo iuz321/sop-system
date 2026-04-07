@@ -6,7 +6,19 @@
 </head>
 <body>
 
-<h1>SOP 系統已啟動 ✅</h1>
+<h1>SOP 系統</h1>
+
+<button onclick="loadData()">讀取 SOP</button>
+
+<pre id="output"></pre>
+
+<script>
+async function loadData() {
+  const res = await fetch("https://raw.githubusercontent.com/iuz321/sop-system/main/data/sop.json");
+  const data = await res.json();
+  document.getElementById("output").innerText = JSON.stringify(data, null, 2);
+}
+</script>
 
 </body>
 </html>
