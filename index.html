@@ -2,12 +2,12 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>大量科技-生產部-SOP 系統首頁</title>
+<title>大量科技-生產部SOP 系統首頁</title>
 
 <style>
 body {
   font-family: Arial;
-  background:#f5f6fa;
+  background: linear-gradient(135deg, #d0eaff, #e8f6ff);
   display:flex;
   justify-content:center;
   align-items:center;
@@ -17,21 +17,36 @@ body {
 
 .container {
   text-align:center;
+  background:white;
+  padding:40px;
+  border-radius:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.1);
+}
+
+.logo {
+  width:120px;
+  margin-bottom:20px;
 }
 
 h1 {
-  margin-bottom:40px;
+  margin-bottom:30px;
+  color:#333;
 }
 
 .btn {
   display:block;
-  width:250px;
-  margin:20px auto;
-  padding:15px;
+  width:260px;
+  margin:15px auto;
+  padding:18px;
   font-size:20px;
   border:none;
-  border-radius:10px;
+  border-radius:12px;
   cursor:pointer;
+  transition:0.2s;
+}
+
+.btn:hover {
+  transform:scale(1.05);
 }
 
 .edit {
@@ -51,7 +66,10 @@ h1 {
 
 <div class="container">
 
-  <h1>📘大量科技-生產部- SOP 系統</h1>
+  <!-- 🔽 換成你的 LOGO 路徑 -->
+  <img src="images/logo.png" class="logo">
+
+  <h1>大量科技-生產部-SOP 系統</h1>
 
   <button class="btn edit" onclick="goEdit()">
     🛠 SOP 編輯
