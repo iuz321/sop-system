@@ -14,7 +14,6 @@ button { margin:5px; padding:6px 12px; }
   padding:15px;
   margin-bottom:10px;
   border-radius:10px;
-  cursor:pointer;
 }
 
 input, textarea {
@@ -106,7 +105,6 @@ function openSOP(i) {
   currentIndex = i;
 
   const sop = data[currentCategory][i];
-
   if(!sop.steps) sop.steps = [];
 
   let html = `
@@ -117,9 +115,6 @@ function openSOP(i) {
     <input value="${sop.title || ""}" 
       onchange="data['${currentCategory}'][${i}].title=this.value">
 
-    <br><br>
-    <button onclick="save()">💾 儲存</button>
-
     <hr>
 
     <h3>📋 步驟列表</h3>
@@ -128,15 +123,42 @@ function openSOP(i) {
   sop.steps.forEach((step, index)=>{
     html += `
       <div class="card">
-        <b>Step ${index+1}</b><br>
-        ${step.title || ""}<br>
-        <button onclick="editStep(${index})">✏ 編輯</button>
+        <b>Step ${index+1}</b>
+
+        <p>標題：</p>
+        <input value="${step.title || ""}" 
+          onchange="data['${currentCategory}'][${i}].steps[${index}].title=this.value">
+
+        <p>描述：</p>
+        <textarea 
+          onchange="data['${currentCategory}'][${i}].steps[${index}].desc=this.value"
+        >${step.desc || ""}</textarea>
+
         <button onclick="deleteStep(${index})">❌ 刪除</button>
       </div>
     `;
   });
 
-  html += `<button onclick="addStep()">➕ 新增步驟</button>`;
+  // 新增步驟區（輸入框）
+  html += `
+    <div class="card">
+      <h4>➕ 新增步驟</h4>
+
+      <p>標題：</p>
+      <input id="newTitle">
+
+      <p>描述：</p>
+      <textarea id="newDesc"></textarea>
+
+      <button onclick="addStep()">新增</button>
+    </div>
+  `;
+
+  // 儲存放最下面
+  html += `
+    <br>
+    <button onclick="save()">💾 儲存全部</button>
+  `;
 
   document.getElementById("main").innerHTML = html;
 }
@@ -144,35 +166,21 @@ function openSOP(i) {
 // ===== 新增步驟 =====
 function addStep() {
 
-  const title = prompt("步驟標題");
-  if(!title) return;
+  const title = document.getElementById("newTitle").value;
+  const desc = document.getElementById("newDesc").value;
 
-  const desc = prompt("步驟描述");
+  if(!title){
+    alert("請輸入標題");
+    return;
+  }
 
   const sop = data[currentCategory][currentIndex];
 
   sop.steps.push({
     title: title,
-    desc: desc || "",
+    desc: desc,
     image: ""
   });
-
-  openSOP(currentIndex);
-}
-
-// ===== 編輯步驟 =====
-function editStep(index) {
-
-  const sop = data[currentCategory][currentIndex];
-  const step = sop.steps[index];
-
-  const title = prompt("修改標題", step.title);
-  if(!title) return;
-
-  const desc = prompt("修改描述", step.desc);
-
-  step.title = title;
-  step.desc = desc;
 
   openSOP(currentIndex);
 }
@@ -183,7 +191,6 @@ function deleteStep(index) {
   if(!confirm("確定刪除？")) return;
 
   const sop = data[currentCategory][currentIndex];
-
   sop.steps.splice(index,1);
 
   openSOP(currentIndex);
