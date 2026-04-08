@@ -17,7 +17,7 @@ button { margin:5px; padding:6px 12px; }
   cursor:pointer;
 }
 
-input {
+input, textarea {
   width:100%;
   padding:6px;
   margin:5px 0;
@@ -107,6 +107,8 @@ function openSOP(i) {
 
   const sop = data[currentCategory][i];
 
+  if(!sop.steps) sop.steps = [];
+
   let html = `
     <h2>✏ 編輯 SOP</h2>
     <button onclick="openCategory('${currentCategory}')">⬅ 返回列表</button>
@@ -117,9 +119,74 @@ function openSOP(i) {
 
     <br><br>
     <button onclick="save()">💾 儲存</button>
+
+    <hr>
+
+    <h3>📋 步驟列表</h3>
   `;
 
+  sop.steps.forEach((step, index)=>{
+    html += `
+      <div class="card">
+        <b>Step ${index+1}</b><br>
+        ${step.title || ""}<br>
+        <button onclick="editStep(${index})">✏ 編輯</button>
+        <button onclick="deleteStep(${index})">❌ 刪除</button>
+      </div>
+    `;
+  });
+
+  html += `<button onclick="addStep()">➕ 新增步驟</button>`;
+
   document.getElementById("main").innerHTML = html;
+}
+
+// ===== 新增步驟 =====
+function addStep() {
+
+  const title = prompt("步驟標題");
+  if(!title) return;
+
+  const desc = prompt("步驟描述");
+
+  const sop = data[currentCategory][currentIndex];
+
+  sop.steps.push({
+    title: title,
+    desc: desc || "",
+    image: ""
+  });
+
+  openSOP(currentIndex);
+}
+
+// ===== 編輯步驟 =====
+function editStep(index) {
+
+  const sop = data[currentCategory][currentIndex];
+  const step = sop.steps[index];
+
+  const title = prompt("修改標題", step.title);
+  if(!title) return;
+
+  const desc = prompt("修改描述", step.desc);
+
+  step.title = title;
+  step.desc = desc;
+
+  openSOP(currentIndex);
+}
+
+// ===== 刪除步驟 =====
+function deleteStep(index) {
+
+  if(!confirm("確定刪除？")) return;
+
+  const sop = data[currentCategory][currentIndex];
+
+  sop.steps.splice(index,1);
+
+  openSOP(currentIndex);
 }
 
 // ===== 儲存 =====
