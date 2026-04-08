@@ -64,6 +64,11 @@ img {
   margin-top:10px;
   border-radius:6px;
 }
+
+.error {
+  color:red;
+  margin-top:10px;
+}
 </style>
 
 </head>
@@ -74,7 +79,7 @@ img {
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
-const PASSWORD = "3686368"; // 🔐 改這裡
+const PASSWORD = "1234"; // 🔐 自行修改
 
 const categories = ["組立","電器","測機","整備","打樣"];
 
@@ -92,10 +97,15 @@ function checkLogin(){
 
   let html = `
     <h1>🔐 管理登入</h1>
+
     <div class="center">
       <input type="password" id="pwd" placeholder="請輸入密碼">
-      <br><br>
+
+      <div id="errorMsg" class="error"></div>
+
       <button onclick="login()">登入</button>
+      <br><br>
+      <button onclick="goHome()">🏠 返回首頁</button>
     </div>
   `;
 
@@ -110,8 +120,19 @@ function login(){
     localStorage.setItem("login","true");
     initApp();
   }else{
-    alert("❌ 密碼錯誤");
+    document.getElementById("errorMsg").innerText = "❌ 密碼錯誤";
   }
+}
+
+// ===== 回首頁 =====
+function goHome(){
+  location.href = "index.html";
+}
+
+// ===== 登出 =====
+function logout(){
+  localStorage.removeItem("login");
+  location.reload();
 }
 
 // ===== 主系統 =====
@@ -119,22 +140,18 @@ async function initApp(){
 
   let html = `
     <h1>🛠 SOP 管理</h1>
+
     <div class="center">
       <a href="index.html">🏠 回首頁</a>
       <button onclick="logout()">登出</button>
     </div>
+
     <div id="main"></div>
   `;
 
   document.getElementById("app").innerHTML = html;
 
   await load();
-}
-
-// ===== 登出 =====
-function logout(){
-  localStorage.removeItem("login");
-  location.reload();
 }
 
 // ===== 初始化 =====
