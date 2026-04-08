@@ -74,7 +74,7 @@ function showCategories() {
   document.getElementById("main").innerHTML = html;
 }
 
-// ===== 顯示該分類的SOP =====
+// ===== 顯示SOP =====
 function openCategory(cat) {
 
   currentCategory = cat;
@@ -106,7 +106,7 @@ function addSOP() {
   openCategory(currentCategory);
 }
 
-// ===== 打開SOP編輯 =====
+// ===== 編輯SOP =====
 function openSOP(i) {
 
   currentIndex = i;
@@ -123,7 +123,6 @@ function openSOP(i) {
       onchange="data['${currentCategory}'][${i}].title=this.value">
 
     <hr>
-
     <h3>📋 步驟列表</h3>
   `;
 
@@ -147,12 +146,14 @@ function openSOP(i) {
         <img id="img_${index}" src="${step.image || ""}" 
           style="${step.image ? '' : 'display:none;'}">
 
+        <br>
+        <button onclick="moveUp(${index})">⬆ 上移</button>
+        <button onclick="moveDown(${index})">⬇ 下移</button>
         <button onclick="deleteStep(${index})">❌ 刪除</button>
       </div>
     `;
   });
 
-  // 新增步驟區
   html += `
     <div class="card">
       <h4>➕ 新增步驟</h4>
@@ -180,9 +181,15 @@ function openSOP(i) {
   document.getElementById("main").innerHTML = html;
 }
 
-// ===== 上傳圖片（轉base64）=====
+// ===== 圖片上傳（限制大小）=====
 function uploadImage(event, index){
   const file = event.target.files[0];
+
+  if(file.size > 500000){
+    alert("圖片請小於500KB");
+    return;
+  }
+
   const reader = new FileReader();
 
   reader.onload = function(e){
@@ -199,11 +206,17 @@ function uploadImage(event, index){
   reader.readAsDataURL(file);
 }
 
-// ===== 新增預覽 =====
+// ===== 新增圖片預覽 =====
 let newImageBase64 = "";
 
 function previewNewImage(event){
   const file = event.target.files[0];
+
+  if(file.size > 500000){
+    alert("圖片請小於500KB");
+    return;
+  }
+
   const reader = new FileReader();
 
   reader.onload = function(e){
@@ -231,8 +244,8 @@ function addStep() {
   const sop = data[currentCategory][currentIndex];
 
   sop.steps.push({
-    title: title,
-    desc: desc,
+    title,
+    desc,
     image: newImageBase64 || ""
   });
 
@@ -241,13 +254,31 @@ function addStep() {
   openSOP(currentIndex);
 }
 
-// ===== 刪除步驟 =====
-function deleteStep(index) {
+// ===== 排序 =====
+function moveUp(index){
+  if(index === 0) return;
 
+  const steps = data[currentCategory][currentIndex].steps;
+  [steps[index-1], steps[index]] = [steps[index], steps[index-1]];
+
+  openSOP(currentIndex);
+}
+
+function moveDown(index){
+  const steps = data[currentCategory][currentIndex].steps;
+
+  if(index === steps.length-1) return;
+
+  [steps[index+1], steps[index]] = [steps[index], steps[index+1]];
+
+  openSOP(currentIndex);
+}
+
+// ===== 刪除 =====
+function deleteStep(index){
   if(!confirm("確定刪除？")) return;
 
-  const sop = data[currentCategory][currentIndex];
-  sop.steps.splice(index,1);
+  data[currentCategory][currentIndex].steps.splice(index,1);
 
   openSOP(currentIndex);
 }
