@@ -4,7 +4,13 @@
   "測機": [
     {
       "title": "鑑別",
-      "steps": []
+      "steps": [
+        {
+          "title": "第二步",
+          "desc": "他搭",
+          "image": ""
+        }
+      ]
     },
     {
       "title": "ID",
