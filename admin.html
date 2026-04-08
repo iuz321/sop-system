@@ -7,20 +7,14 @@
 <style>
 body { font-family: Arial; padding:20px; background:#f5f6fa; }
 
-.topbar {
-  margin-bottom: 20px;
-}
-
-button {
-  margin: 5px;
-  padding: 6px 12px;
-}
+button { margin:5px; padding:6px 12px; }
 
 .card {
   background:white;
   padding:15px;
   margin-bottom:10px;
   border-radius:10px;
+  cursor:pointer;
 }
 
 input {
@@ -37,92 +31,95 @@ input {
 <h1>🛠 SOP 管理</h1>
 <a href="index.html">🏠 回首頁</a>
 
-<div class="topbar" id="categoryBar"></div>
-
-<h2 id="currentTitle"></h2>
-
-<div id="list"></div>
+<div id="main"></div>
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
 
-// 固定分類
 const categories = ["組立","電器","測機","整備","打樣"];
 
 let data = {};
-let current = null;
+let currentCategory = null;
+let currentIndex = null;
 
 // ===== 初始化 =====
 async function load() {
   const res = await fetch(API);
   data = await res.json();
 
-  // 確保分類存在
   categories.forEach(c=>{
-    if(!data[c]) data[c] = [];
+    if(!data[c]) data[c]=[];
   });
 
-  renderCategories();
+  showCategories();
 }
 
 // ===== 顯示分類 =====
-function renderCategories() {
-  const div = document.getElementById("categoryBar");
-  div.innerHTML = "";
+function showCategories() {
+  currentCategory = null;
+  currentIndex = null;
+
+  let html = "<h2>選擇分類</h2>";
 
   categories.forEach(c=>{
-    const btn = document.createElement("button");
-    btn.innerText = c;
-    btn.onclick = () => {
-      current = c;
-      renderList();
-    };
-    div.appendChild(btn);
+    html += `<button onclick="openCategory('${c}')">${c}</button>`;
   });
+
+  document.getElementById("main").innerHTML = html;
 }
 
-// ===== 顯示該分類 =====
-function renderList() {
+// ===== 顯示該分類的SOP =====
+function openCategory(cat) {
 
-  document.getElementById("currentTitle").innerText = "📂 " + current;
+  currentCategory = cat;
 
-  const div = document.getElementById("list");
-  div.innerHTML = "";
+  let html = `
+    <h2>📂 ${cat}</h2>
+    <button onclick="showCategories()">⬅ 返回分類</button>
+  `;
 
-  data[current].forEach((sop, i)=>{
-
-    div.innerHTML += `
-      <div class="card">
-        <input value="${sop.title||""}" 
-          onchange="data['${current}'][${i}].title=this.value">
-
-        <button onclick="deleteSOP(${i})">🗑 刪除</button>
+  data[cat].forEach((sop,i)=>{
+    html += `
+      <div class="card" onclick="openSOP(${i})">
+        ${sop.title || "未命名SOP"}
       </div>
     `;
   });
 
-  // ⭐ 新增按鈕（只在分類內）
-  div.innerHTML += `
-    <button onclick="addSOP()">➕ 新增 SOP</button>
+  html += `<button onclick="addSOP()">➕ 新增SOP</button>`;
+
+  document.getElementById("main").innerHTML = html;
+}
+
+// ===== 新增SOP =====
+function addSOP() {
+  data[currentCategory].push({
+    title:"新SOP",
+    steps:[]
+  });
+  openCategory(currentCategory);
+}
+
+// ===== 打開SOP編輯 =====
+function openSOP(i) {
+
+  currentIndex = i;
+
+  const sop = data[currentCategory][i];
+
+  let html = `
+    <h2>✏ 編輯 SOP</h2>
+    <button onclick="openCategory('${currentCategory}')">⬅ 返回列表</button>
+
+    <p>標題：</p>
+    <input value="${sop.title || ""}" 
+      onchange="data['${currentCategory}'][${i}].title=this.value">
+
+    <br><br>
     <button onclick="save()">💾 儲存</button>
   `;
-}
 
-// ===== CRUD =====
-function addSOP() {
-  if(!current) return alert("請先選分類");
-
-  data[current].push({
-    title: "新SOP",
-    steps: []
-  });
-
-  renderList();
-}
-
-function deleteSOP(i) {
-  data[current].splice(i,1);
-  renderList();
+  document.getElementById("main").innerHTML = html;
 }
 
 // ===== 儲存 =====
@@ -135,6 +132,8 @@ async function save() {
   });
 
   alert("✅ 已儲存");
+
+  openCategory(currentCategory);
 }
 
 // ===== 啟動 =====
