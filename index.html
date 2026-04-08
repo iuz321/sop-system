@@ -2,25 +2,46 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>SOP 系統</title>
+<title>SOP 系統首頁</title>
 
 <style>
 body {
   font-family: Arial;
-  padding:20px;
   background:#f5f6fa;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  margin:0;
 }
 
-button {
-  margin:5px;
-  padding:8px 14px;
+.container {
+  text-align:center;
 }
 
-.card {
-  background:white;
+h1 {
+  margin-bottom:40px;
+}
+
+.btn {
+  display:block;
+  width:250px;
+  margin:20px auto;
   padding:15px;
-  margin-bottom:10px;
+  font-size:20px;
+  border:none;
   border-radius:10px;
+  cursor:pointer;
+}
+
+.edit {
+  background:#3498db;
+  color:white;
+}
+
+.learn {
+  background:#2ecc71;
+  color:white;
 }
 </style>
 
@@ -28,75 +49,28 @@ button {
 
 <body>
 
-<h1>📘 SOP 系統</h1>
-<a href="admin.html">🛠 管理頁</a>
+<div class="container">
 
-<div id="main"></div>
+  <h1>📘 SOP 系統</h1>
+
+  <button class="btn edit" onclick="goEdit()">
+    🛠 SOP 編輯
+  </button>
+
+  <button class="btn learn" onclick="goLearn()">
+    📖 SOP 學習
+  </button>
+
+</div>
 
 <script>
-const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
-
-const categories = ["組立","電器","測機","整備","打樣"];
-
-let data = {};
-let currentCategory = null;
-
-// ===== 初始化 =====
-async function load() {
-  const res = await fetch(API);
-  data = await res.json();
-
-  categories.forEach(c=>{
-    if(!data[c]) data[c]=[];
-  });
-
-  showCategories();
+function goEdit(){
+  location.href = "admin.html";
 }
 
-// ===== 顯示分類 =====
-function showCategories(){
-
-  let html = "<h2>選擇分類</h2>";
-
-  categories.forEach(c=>{
-    html += `<button onclick="openCategory('${c}')">${c}</button>`;
-  });
-
-  document.getElementById("main").innerHTML = html;
+function goLearn(){
+  location.href = "learn.html";
 }
-
-// ===== 顯示SOP =====
-function openCategory(cat){
-
-  currentCategory = cat;
-
-  let html = `
-    <h2>📂 ${cat}</h2>
-    <button onclick="showCategories()">⬅ 返回</button>
-  `;
-
-  data[cat].forEach((sop,i)=>{
-
-    html += `
-      <div class="card">
-        <b>${sop.title || "未命名SOP"}</b>
-        <br><br>
-
-        <button onclick="openLearn('${cat}', ${i})">📖 閱讀</button>
-      </div>
-    `;
-  });
-
-  document.getElementById("main").innerHTML = html;
-}
-
-// ===== 開啟閱讀模式 =====
-function openLearn(cat, i){
-  location.href = `learn.html?cat=${cat}&id=${i}`;
-}
-
-// ===== 啟動 =====
-load();
 </script>
 
 </body>
