@@ -57,72 +57,56 @@ img {
   border-radius:6px;
 }
 
-.error {
-  color:red;
-  margin-top:10px;
-}
+.error { color:red; margin-top:10px; }
 </style>
-
 </head>
 
 <body>
-
 <div class="container" id="app"></div>
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
 const PASSWORD = "1234";
-
 const categories = ["組立","電器","測機","整備","打樣"];
 
-let data = {};
-let currentCategory = null;
-let currentIndex = null;
+let data={}, currentCategory=null, currentIndex=null;
+let newImageBase64="";
 
 // ===== 登入 =====
 function checkLogin(){
   if(localStorage.getItem("login")==="true"){ initApp(); return; }
 
-  document.getElementById("app").innerHTML = `
+  app.innerHTML=`
     <h1>🔐 管理登入</h1>
     <div class="center">
       <input type="password" id="pwd">
       <div id="errorMsg" class="error"></div>
       <button onclick="login()">登入</button><br><br>
       <button onclick="goHome()">🏠 返回首頁</button>
-    </div>
-  `;
+    </div>`;
 }
 
 function login(){
-  const val=document.getElementById("pwd").value;
-  if(val===PASSWORD){
+  if(pwd.value===PASSWORD){
     localStorage.setItem("login","true");
     initApp();
   }else{
-    document.getElementById("errorMsg").innerText="❌ 密碼錯誤";
+    errorMsg.innerText="❌ 密碼錯誤";
   }
 }
 
-function logout(){
-  localStorage.removeItem("login");
-  location.reload();
-}
-
-function goHome(){
-  location.href="index.html";
-}
+function logout(){ localStorage.removeItem("login"); location.reload();}
+function goHome(){ location.href="index.html"; }
 
 // ===== 主系統 =====
 async function initApp(){
-  document.getElementById("app").innerHTML = `
+  app.innerHTML=`
     <h1>🛠 SOP 管理</h1>
     <div class="center">
       <a href="index.html">🏠 回首頁</a>
       <button onclick="logout()">登出</button>
     </div>
-    <div id="main"></div>
-  `;
+    <div id="main"></div>`;
   await load();
 }
 
@@ -130,11 +114,7 @@ async function initApp(){
 async function load(){
   const res=await fetch(API);
   data=await res.json();
-
-  categories.forEach(c=>{
-    if(!data[c]) data[c]=[];
-  });
-
+  categories.forEach(c=>{ if(!data[c]) data[c]=[]; });
   showCategories();
 }
 
@@ -145,71 +125,52 @@ function showCategories(){
     html+=`<button onclick="openCategory('${c}')">${c}</button>`;
   });
   html+="</div>";
-  document.getElementById("main").innerHTML=html;
+  main.innerHTML=html;
 }
 
-// ===== SOP列表（含搜尋）=====
+// ===== SOP列表（搜尋）=====
 function openCategory(cat){
-
   currentCategory=cat;
 
-  let html=`
+  main.innerHTML=`
     <h2 class="center">📂 ${cat}</h2>
-
-    <div class="center">
-      <button onclick="showCategories()">⬅ 返回分類</button>
-    </div>
-
-    <input id="searchBox" placeholder="🔍 搜尋SOP"
-      oninput="renderSOPList()">
+    <div class="center"><button onclick="showCategories()">⬅ 返回</button></div>
+    <input id="searchBox" placeholder="🔍 搜尋" oninput="renderList()">
+    <div id="list"></div>
+    <div class="center"><button onclick="addSOP()">➕ 新增SOP</button></div>
   `;
-
-  html += `<div id="sopList"></div>`;
-
-  html += `<div class="center">
-    <button onclick="addSOP()">➕ 新增SOP</button>
-  </div>`;
-
-  document.getElementById("main").innerHTML=html;
-
-  renderSOPList();
+  renderList();
 }
 
-// ===== SOP渲染（搜尋）=====
-function renderSOPList(){
-
-  const keyword=document.getElementById("searchBox").value.toLowerCase();
+function renderList(){
+  const kw=(searchBox.value||"").toLowerCase();
   let html="";
 
-  data[currentCategory].forEach((sop,i)=>{
-
-    if(sop.title && !sop.title.toLowerCase().includes(keyword)) return;
+  data[currentCategory].forEach((s,i)=>{
+    if(s.title && !s.title.toLowerCase().includes(kw)) return;
 
     html+=`
       <div class="card">
-        <b>${sop.title||"未命名SOP"}</b><br><br>
-        <button onclick="openSOP(${i})">✏ 編輯</button>
-        <button onclick="deleteSOP(${i})">🗑 刪除</button>
-      </div>
-    `;
+        <b>${s.title||"未命名"}</b><br><br>
+        <button onclick="openSOP(${i})">✏</button>
+        <button onclick="deleteSOP(${i})">🗑</button>
+      </div>`;
   });
 
-  document.getElementById("sopList").innerHTML=html;
+  list.innerHTML=html;
 }
 
-// ===== SOP操作 =====
+// ===== SOP =====
 function addSOP(){
   data[currentCategory].push({title:"新SOP",steps:[]});
-  renderSOPList();
+  renderList();
 }
 
-// 🔥 刪除後自動儲存
 async function deleteSOP(i){
-  if(!confirm("確定刪除這個SOP？")) return;
-
+  if(!confirm("確定刪除？")) return;
   data[currentCategory].splice(i,1);
   await saveData();
-  renderSOPList();
+  renderList();
 }
 
 // ===== 編輯 =====
@@ -219,7 +180,7 @@ function openSOP(i){
   if(!sop.steps) sop.steps=[];
 
   let html=`
-    <h2 class="center">✏ 編輯 SOP</h2>
+    <h2 class="center">✏ 編輯</h2>
     <div class="center">
       <button onclick="openCategory('${currentCategory}')">⬅ 返回</button>
     </div>
@@ -227,28 +188,35 @@ function openSOP(i){
     <input value="${sop.title||""}" 
       onchange="data['${currentCategory}'][${i}].title=this.value">
 
-    <hr><h3>步驟</h3>
+    <hr>
   `;
 
-  sop.steps.forEach((s,index)=>{
+  sop.steps.forEach((st,idx)=>{
     html+=`
       <div class="card">
-        <input value="${s.title||""}" 
-          onchange="data['${currentCategory}'][${i}].steps[${index}].title=this.value">
+        <input value="${st.title||""}" 
+          onchange="data['${currentCategory}'][${i}].steps[${idx}].title=this.value">
 
         <textarea 
-          onchange="data['${currentCategory}'][${i}].steps[${index}].desc=this.value"
-        >${s.desc||""}</textarea>
+          onchange="data['${currentCategory}'][${i}].steps[${idx}].desc=this.value"
+        >${st.desc||""}</textarea>
 
-        <button onclick="deleteStep(${index})">❌</button>
-      </div>
-    `;
+        <input type="file" onchange="uploadImage(event,${idx})">
+
+        <img id="img_${idx}" src="${st.image||""}" 
+          style="${st.image?'':'display:none;'}">
+
+        <br>
+        <button onclick="deleteStep(${idx})">❌</button>
+      </div>`;
   });
 
   html+=`
     <div class="card">
-      <input id="newTitle">
+      <input id="newTitle" placeholder="標題">
       <textarea id="newDesc"></textarea>
+      <input type="file" onchange="previewNewImage(event)">
+      <img id="previewNew" style="display:none;">
       <button onclick="addStep()">新增</button>
     </div>
 
@@ -257,21 +225,55 @@ function openSOP(i){
     </div>
   `;
 
-  document.getElementById("main").innerHTML=html;
+  main.innerHTML=html;
+}
+
+// ===== 圖片（修復回來）=====
+function uploadImage(e,i){
+  const f=e.target.files[0];
+  if(f.size>500000){ alert("圖片<500KB"); return; }
+
+  const r=new FileReader();
+  r.onload=x=>{
+    const base64=x.target.result;
+    data[currentCategory][currentIndex].steps[i].image=base64;
+
+    const img=document.getElementById("img_"+i);
+    img.src=base64;
+    img.style.display="block";
+  };
+  r.readAsDataURL(f);
+}
+
+function previewNewImage(e){
+  const f=e.target.files[0];
+  if(f.size>500000){ alert("圖片<500KB"); return; }
+
+  const r=new FileReader();
+  r.onload=x=>{
+    newImageBase64=x.target.result;
+    previewNew.src=newImageBase64;
+    previewNew.style.display="block";
+  };
+  r.readAsDataURL(f);
 }
 
 // ===== 步驟 =====
 async function deleteStep(i){
   data[currentCategory][currentIndex].steps.splice(i,1);
-  await saveData(); // 🔥 自動儲存
+  await saveData();
   openSOP(currentIndex);
 }
 
 function addStep(){
-  const t=document.getElementById("newTitle").value;
-  const d=document.getElementById("newDesc").value;
+  const t=newTitle.value;
+  const d=newDesc.value;
 
-  data[currentCategory][currentIndex].steps.push({title:t,desc:d});
+  data[currentCategory][currentIndex].steps.push({
+    title:t,desc:d,image:newImageBase64
+  });
+
+  newImageBase64="";
   openSOP(currentIndex);
 }
 
