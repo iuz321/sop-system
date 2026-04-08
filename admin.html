@@ -141,9 +141,8 @@ function openSOP(i) {
           onchange="data['${currentCategory}'][${i}].steps[${index}].desc=this.value"
         >${step.desc || ""}</textarea>
 
-        <p>圖片URL：</p>
-        <input value="${step.image || ""}" 
-          onchange="updateImage(${index}, this.value)">
+        <p>圖片：</p>
+        <input type="file" onchange="uploadImage(event, ${index})">
 
         <img id="img_${index}" src="${step.image || ""}" 
           style="${step.image ? '' : 'display:none;'}">
@@ -164,8 +163,8 @@ function openSOP(i) {
       <p>描述：</p>
       <textarea id="newDesc"></textarea>
 
-      <p>圖片URL：</p>
-      <input id="newImage" oninput="previewNewImage(this.value)">
+      <p>圖片：</p>
+      <input type="file" onchange="previewNewImage(event)">
 
       <img id="previewNew" style="display:none;">
 
@@ -181,19 +180,41 @@ function openSOP(i) {
   document.getElementById("main").innerHTML = html;
 }
 
-// ===== 更新圖片 =====
-function updateImage(index, url) {
-  const sop = data[currentCategory][currentIndex];
-  sop.steps[index].image = url;
+// ===== 上傳圖片（轉base64）=====
+function uploadImage(event, index){
+  const file = event.target.files[0];
+  const reader = new FileReader();
 
-  const img = document.getElementById("img_" + index);
+  reader.onload = function(e){
+    const base64 = e.target.result;
 
-  if(url){
-    img.src = url;
+    const sop = data[currentCategory][currentIndex];
+    sop.steps[index].image = base64;
+
+    const img = document.getElementById("img_"+index);
+    img.src = base64;
     img.style.display = "block";
-  }else{
-    img.style.display = "none";
-  }
+  };
+
+  reader.readAsDataURL(file);
+}
+
+// ===== 新增預覽 =====
+let newImageBase64 = "";
+
+function previewNewImage(event){
+  const file = event.target.files[0];
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+    newImageBase64 = e.target.result;
+
+    const img = document.getElementById("previewNew");
+    img.src = newImageBase64;
+    img.style.display = "block";
+  };
+
+  reader.readAsDataURL(file);
 }
 
 // ===== 新增步驟 =====
@@ -201,7 +222,6 @@ function addStep() {
 
   const title = document.getElementById("newTitle").value;
   const desc = document.getElementById("newDesc").value;
-  const image = document.getElementById("newImage").value;
 
   if(!title){
     alert("請輸入標題");
@@ -213,22 +233,12 @@ function addStep() {
   sop.steps.push({
     title: title,
     desc: desc,
-    image: image
+    image: newImageBase64 || ""
   });
 
+  newImageBase64 = "";
+
   openSOP(currentIndex);
-}
-
-// ===== 新增圖片預覽 =====
-function previewNewImage(url){
-  const img = document.getElementById("previewNew");
-
-  if(url){
-    img.src = url;
-    img.style.display = "block";
-  }else{
-    img.style.display = "none";
-  }
 }
 
 // ===== 刪除步驟 =====
