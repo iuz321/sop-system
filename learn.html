@@ -7,19 +7,44 @@
 <style>
 body {
   font-family: Arial;
-  background:#111;
-  color:white;
-  padding:20px;
+  background: linear-gradient(135deg, #d0eaff, #e8f6ff);
+  display:flex;
+  justify-content:center;
+  padding:30px;
+  margin:0;
+}
+
+.container {
+  width:800px;
+  background:white;
+  padding:30px;
+  border-radius:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.1);
+}
+
+h1, h2, h3 {
+  text-align:center;
+}
+
+.center {
+  text-align:center;
 }
 
 button {
+  margin:6px;
   padding:10px 16px;
-  margin:5px;
-  font-size:16px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  background:#e3f2ff;
+}
+
+button:hover {
+  background:#cde7ff;
 }
 
 .card {
-  background:#222;
+  background:#f9fbff;
   padding:15px;
   margin-bottom:10px;
   border-radius:10px;
@@ -29,24 +54,32 @@ button {
   text-align:center;
 }
 
-.viewer h1 { font-size:30px; }
-.viewer h2 { font-size:24px; }
-.viewer p { font-size:20px; }
+.viewer h1 { font-size:28px; }
+.viewer h2 { font-size:22px; }
+.viewer p { font-size:18px; }
 
-.viewer img {
+img {
   max-width:90%;
-  margin-top:20px;
+  margin-top:15px;
   border-radius:10px;
 }
 </style>
+
 </head>
 
 <body>
 
-<h1>📖 SOP 學習</h1>
-<button onclick="goHome()">🏠 回首頁</button>
+<div class="container">
 
-<div id="app">載入中...</div>
+<h1>📖 SOP 學習</h1>
+
+<div class="center">
+  <button onclick="goHome()">🏠 回首頁</button>
+</div>
+
+<div id="app"></div>
+
+</div>
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
@@ -85,33 +118,37 @@ async function load(){
   }
 }
 
-// ===== 顯示分類 =====
+// ===== 分類 =====
 function showCategories(){
 
   let html = "<h2>選擇分類</h2>";
 
+  html += "<div class='center'>";
   categories.forEach(c=>{
     html += `<button onclick="openCategory('${c}')">${c}</button>`;
   });
+  html += "</div>";
 
   document.getElementById("app").innerHTML = html;
 }
 
-// ===== 顯示SOP =====
+// ===== SOP列表 =====
 function openCategory(cat){
 
   currentCategory = cat;
 
   let html = `
     <h2>📂 ${cat}</h2>
-    <button onclick="showCategories()">⬅ 返回分類</button>
+    <div class="center">
+      <button onclick="showCategories()">⬅ 返回分類</button>
+    </div>
   `;
 
   data[cat].forEach((sop,i)=>{
     html += `
       <div class="card">
         <b>${sop.title || "未命名SOP"}</b><br><br>
-        <button onclick="startViewer(${i})">📖 開始</button>
+        <button onclick="startViewer(${i})">📖 開始學習</button>
       </div>
     `;
   });
