@@ -5,12 +5,37 @@
 <title>SOP 管理</title>
 
 <style>
-body { font-family: Arial; padding:20px; background:#f5f6fa; }
+body {
+  font-family: Arial;
+  background: linear-gradient(135deg, #d0eaff, #e8f6ff);
+  display:flex;
+  justify-content:center;
+  padding:30px;
+  margin:0;
+}
 
-button { margin:5px; padding:6px 12px; }
+.container {
+  width:800px;
+  background:white;
+  padding:30px;
+  border-radius:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.1);
+}
+
+h1 {
+  text-align:center;
+}
+
+button {
+  margin:5px;
+  padding:8px 14px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
 
 .card {
-  background:white;
+  background:#f9fbff;
   padding:15px;
   margin-bottom:10px;
   border-radius:10px;
@@ -18,8 +43,10 @@ button { margin:5px; padding:6px 12px; }
 
 input, textarea {
   width:100%;
-  padding:6px;
+  padding:8px;
   margin:5px 0;
+  border-radius:6px;
+  border:1px solid #ccc;
 }
 
 img {
@@ -34,10 +61,16 @@ img {
 
 <body>
 
+<div class="container">
+
 <h1>🛠 SOP 管理</h1>
-<a href="index.html">🏠 回首頁</a>
+<div style="text-align:center;">
+  <a href="index.html">🏠 回首頁</a>
+</div>
 
 <div id="main"></div>
+
+</div>
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
@@ -60,12 +93,12 @@ async function load() {
   showCategories();
 }
 
-// ===== 顯示分類 =====
+// ===== 分類 =====
 function showCategories() {
   currentCategory = null;
   currentIndex = null;
 
-  let html = "<h2>選擇分類</h2>";
+  let html = "<h2 style='text-align:center;'>選擇分類</h2>";
 
   categories.forEach(c=>{
     html += `<button onclick="openCategory('${c}')">${c}</button>`;
@@ -74,20 +107,23 @@ function showCategories() {
   document.getElementById("main").innerHTML = html;
 }
 
-// ===== 顯示SOP =====
+// ===== SOP列表 =====
 function openCategory(cat) {
 
   currentCategory = cat;
 
   let html = `
-    <h2>📂 ${cat}</h2>
-    <button onclick="showCategories()">⬅ 返回分類</button>
+    <h2 style="text-align:center;">📂 ${cat}</h2>
+    <div style="text-align:center;">
+      <button onclick="showCategories()">⬅ 返回分類</button>
+    </div>
   `;
 
   data[cat].forEach((sop,i)=>{
     html += `
-      <div class="card" onclick="openSOP(${i})">
-        ${sop.title || "未命名SOP"}
+      <div class="card">
+        <b>${sop.title || "未命名SOP"}</b><br><br>
+        <button onclick="openSOP(${i})">✏ 編輯</button>
       </div>
     `;
   });
@@ -106,7 +142,7 @@ function addSOP() {
   openCategory(currentCategory);
 }
 
-// ===== 編輯SOP =====
+// ===== 編輯 =====
 function openSOP(i) {
 
   currentIndex = i;
@@ -115,14 +151,18 @@ function openSOP(i) {
   if(!sop.steps) sop.steps = [];
 
   let html = `
-    <h2>✏ 編輯 SOP</h2>
-    <button onclick="openCategory('${currentCategory}')">⬅ 返回列表</button>
+    <h2 style="text-align:center;">✏ 編輯 SOP</h2>
+
+    <div style="text-align:center;">
+      <button onclick="openCategory('${currentCategory}')">⬅ 返回列表</button>
+    </div>
 
     <p>標題：</p>
     <input value="${sop.title || ""}" 
       onchange="data['${currentCategory}'][${i}].title=this.value">
 
     <hr>
+
     <h3>📋 步驟列表</h3>
   `;
 
@@ -147,9 +187,9 @@ function openSOP(i) {
           style="${step.image ? '' : 'display:none;'}">
 
         <br>
-        <button onclick="moveUp(${index})">⬆ 上移</button>
-        <button onclick="moveDown(${index})">⬇ 下移</button>
-        <button onclick="deleteStep(${index})">❌ 刪除</button>
+        <button onclick="moveUp(${index})">⬆</button>
+        <button onclick="moveDown(${index})">⬇</button>
+        <button onclick="deleteStep(${index})">❌</button>
       </div>
     `;
   });
@@ -158,67 +198,54 @@ function openSOP(i) {
     <div class="card">
       <h4>➕ 新增步驟</h4>
 
-      <p>標題：</p>
-      <input id="newTitle">
+      <input id="newTitle" placeholder="標題">
+      <textarea id="newDesc" placeholder="描述"></textarea>
 
-      <p>描述：</p>
-      <textarea id="newDesc"></textarea>
-
-      <p>圖片：</p>
       <input type="file" onchange="previewNewImage(event)">
-
       <img id="previewNew" style="display:none;">
 
       <button onclick="addStep()">新增</button>
     </div>
-  `;
 
-  html += `
-    <br>
-    <button onclick="save()">💾 儲存全部</button>
+    <div style="text-align:center;">
+      <button onclick="save()">💾 儲存全部</button>
+    </div>
   `;
 
   document.getElementById("main").innerHTML = html;
 }
 
-// ===== 圖片上傳（限制大小）=====
+// ===== 圖片 =====
 function uploadImage(event, index){
   const file = event.target.files[0];
-
   if(file.size > 500000){
     alert("圖片請小於500KB");
     return;
   }
 
   const reader = new FileReader();
-
   reader.onload = function(e){
     const base64 = e.target.result;
 
-    const sop = data[currentCategory][currentIndex];
-    sop.steps[index].image = base64;
+    data[currentCategory][currentIndex].steps[index].image = base64;
 
     const img = document.getElementById("img_"+index);
     img.src = base64;
     img.style.display = "block";
   };
-
   reader.readAsDataURL(file);
 }
 
-// ===== 新增圖片預覽 =====
 let newImageBase64 = "";
 
 function previewNewImage(event){
   const file = event.target.files[0];
-
   if(file.size > 500000){
     alert("圖片請小於500KB");
     return;
   }
 
   const reader = new FileReader();
-
   reader.onload = function(e){
     newImageBase64 = e.target.result;
 
@@ -226,74 +253,51 @@ function previewNewImage(event){
     img.src = newImageBase64;
     img.style.display = "block";
   };
-
   reader.readAsDataURL(file);
 }
 
-// ===== 新增步驟 =====
-function addStep() {
-
+// ===== CRUD =====
+function addStep(){
   const title = document.getElementById("newTitle").value;
   const desc = document.getElementById("newDesc").value;
 
-  if(!title){
-    alert("請輸入標題");
-    return;
-  }
+  if(!title){ alert("請輸入標題"); return; }
 
-  const sop = data[currentCategory][currentIndex];
-
-  sop.steps.push({
-    title,
-    desc,
-    image: newImageBase64 || ""
+  data[currentCategory][currentIndex].steps.push({
+    title, desc, image:newImageBase64
   });
 
-  newImageBase64 = "";
-
+  newImageBase64="";
   openSOP(currentIndex);
 }
 
-// ===== 排序 =====
+function deleteStep(index){
+  data[currentCategory][currentIndex].steps.splice(index,1);
+  openSOP(currentIndex);
+}
+
 function moveUp(index){
-  if(index === 0) return;
-
-  const steps = data[currentCategory][currentIndex].steps;
-  [steps[index-1], steps[index]] = [steps[index], steps[index-1]];
-
+  if(index===0)return;
+  let s=data[currentCategory][currentIndex].steps;
+  [s[index-1],s[index]]=[s[index],s[index-1]];
   openSOP(currentIndex);
 }
 
 function moveDown(index){
-  const steps = data[currentCategory][currentIndex].steps;
-
-  if(index === steps.length-1) return;
-
-  [steps[index+1], steps[index]] = [steps[index], steps[index+1]];
-
-  openSOP(currentIndex);
-}
-
-// ===== 刪除 =====
-function deleteStep(index){
-  if(!confirm("確定刪除？")) return;
-
-  data[currentCategory][currentIndex].steps.splice(index,1);
-
+  let s=data[currentCategory][currentIndex].steps;
+  if(index===s.length-1)return;
+  [s[index+1],s[index]]=[s[index],s[index+1]];
   openSOP(currentIndex);
 }
 
 // ===== 儲存 =====
-async function save() {
-
+async function save(){
   await fetch(API,{
     method:"POST",
     headers:{ "Content-Type":"application/json"},
     body: JSON.stringify(data)
   });
-
   alert("✅ 已儲存");
-
   openCategory(currentCategory);
 }
 
