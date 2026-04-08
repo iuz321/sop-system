@@ -30,11 +30,6 @@ h1 {
   text-align:center;
 }
 
-.category-group {
-  text-align:center;
-  margin-top:20px;
-}
-
 button {
   margin:6px;
   padding:10px 16px;
@@ -75,26 +70,72 @@ img {
 
 <body>
 
-<div class="container">
-
-<h1>🛠 SOP 管理</h1>
-
-<div class="center">
-  <a href="index.html">🏠 回首頁</a>
-</div>
-
-<div id="main"></div>
-
-</div>
+<div class="container" id="app"></div>
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
+const PASSWORD = "1234"; // 🔐 改這裡
 
 const categories = ["組立","電器","測機","整備","打樣"];
 
 let data = {};
 let currentCategory = null;
 let currentIndex = null;
+
+// ===== 登入檢查 =====
+function checkLogin(){
+
+  if(localStorage.getItem("login") === "true"){
+    initApp();
+    return;
+  }
+
+  let html = `
+    <h1>🔐 管理登入</h1>
+    <div class="center">
+      <input type="password" id="pwd" placeholder="請輸入密碼">
+      <br><br>
+      <button onclick="login()">登入</button>
+    </div>
+  `;
+
+  document.getElementById("app").innerHTML = html;
+}
+
+// ===== 登入 =====
+function login(){
+  const input = document.getElementById("pwd").value;
+
+  if(input === PASSWORD){
+    localStorage.setItem("login","true");
+    initApp();
+  }else{
+    alert("❌ 密碼錯誤");
+  }
+}
+
+// ===== 主系統 =====
+async function initApp(){
+
+  let html = `
+    <h1>🛠 SOP 管理</h1>
+    <div class="center">
+      <a href="index.html">🏠 回首頁</a>
+      <button onclick="logout()">登出</button>
+    </div>
+    <div id="main"></div>
+  `;
+
+  document.getElementById("app").innerHTML = html;
+
+  await load();
+}
+
+// ===== 登出 =====
+function logout(){
+  localStorage.removeItem("login");
+  location.reload();
+}
 
 // ===== 初始化 =====
 async function load() {
@@ -108,14 +149,12 @@ async function load() {
   showCategories();
 }
 
-// ===== 分類（已修正置中）=====
+// ===== 分類 =====
 function showCategories() {
-  currentCategory = null;
-  currentIndex = null;
 
   let html = "<h2 class='center'>選擇分類</h2>";
 
-  html += "<div class='category-group'>";
+  html += "<div class='center'>";
   categories.forEach(c=>{
     html += `<button onclick="openCategory('${c}')">${c}</button>`;
   });
@@ -145,11 +184,7 @@ function openCategory(cat) {
     `;
   });
 
-  html += `
-    <div class="center">
-      <button onclick="addSOP()">➕ 新增SOP</button>
-    </div>
-  `;
+  html += `<div class="center"><button onclick="addSOP()">➕ 新增SOP</button></div>`;
 
   document.getElementById("main").innerHTML = html;
 }
@@ -167,7 +202,6 @@ function addSOP() {
 function openSOP(i) {
 
   currentIndex = i;
-
   const sop = data[currentCategory][i];
   if(!sop.steps) sop.steps = [];
 
@@ -192,16 +226,13 @@ function openSOP(i) {
       <div class="card">
         <b>Step ${index+1}</b>
 
-        <p>標題：</p>
         <input value="${step.title || ""}" 
           onchange="data['${currentCategory}'][${i}].steps[${index}].title=this.value">
 
-        <p>描述：</p>
         <textarea 
           onchange="data['${currentCategory}'][${i}].steps[${index}].desc=this.value"
         >${step.desc || ""}</textarea>
 
-        <p>圖片：</p>
         <input type="file" onchange="uploadImage(event, ${index})">
 
         <img id="img_${index}" src="${step.image || ""}" 
@@ -247,7 +278,6 @@ function uploadImage(event, index){
   const reader = new FileReader();
   reader.onload = function(e){
     const base64 = e.target.result;
-
     data[currentCategory][currentIndex].steps[index].image = base64;
 
     const img = document.getElementById("img_"+index);
@@ -323,7 +353,7 @@ async function save(){
 }
 
 // ===== 啟動 =====
-load();
+checkLogin();
 </script>
 
 </body>
