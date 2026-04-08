@@ -26,12 +26,26 @@ h1 {
   text-align:center;
 }
 
+.center {
+  text-align:center;
+}
+
+.category-group {
+  text-align:center;
+  margin-top:20px;
+}
+
 button {
-  margin:5px;
-  padding:8px 14px;
+  margin:6px;
+  padding:10px 16px;
   border:none;
-  border-radius:8px;
+  border-radius:10px;
   cursor:pointer;
+  background:#e3f2ff;
+}
+
+button:hover {
+  background:#cde7ff;
 }
 
 .card {
@@ -64,7 +78,8 @@ img {
 <div class="container">
 
 <h1>🛠 SOP 管理</h1>
-<div style="text-align:center;">
+
+<div class="center">
   <a href="index.html">🏠 回首頁</a>
 </div>
 
@@ -93,16 +108,18 @@ async function load() {
   showCategories();
 }
 
-// ===== 分類 =====
+// ===== 分類（已修正置中）=====
 function showCategories() {
   currentCategory = null;
   currentIndex = null;
 
-  let html = "<h2 style='text-align:center;'>選擇分類</h2>";
+  let html = "<h2 class='center'>選擇分類</h2>";
 
+  html += "<div class='category-group'>";
   categories.forEach(c=>{
     html += `<button onclick="openCategory('${c}')">${c}</button>`;
   });
+  html += "</div>";
 
   document.getElementById("main").innerHTML = html;
 }
@@ -113,8 +130,8 @@ function openCategory(cat) {
   currentCategory = cat;
 
   let html = `
-    <h2 style="text-align:center;">📂 ${cat}</h2>
-    <div style="text-align:center;">
+    <h2 class="center">📂 ${cat}</h2>
+    <div class="center">
       <button onclick="showCategories()">⬅ 返回分類</button>
     </div>
   `;
@@ -128,7 +145,11 @@ function openCategory(cat) {
     `;
   });
 
-  html += `<button onclick="addSOP()">➕ 新增SOP</button>`;
+  html += `
+    <div class="center">
+      <button onclick="addSOP()">➕ 新增SOP</button>
+    </div>
+  `;
 
   document.getElementById("main").innerHTML = html;
 }
@@ -151,9 +172,9 @@ function openSOP(i) {
   if(!sop.steps) sop.steps = [];
 
   let html = `
-    <h2 style="text-align:center;">✏ 編輯 SOP</h2>
+    <h2 class="center">✏ 編輯 SOP</h2>
 
-    <div style="text-align:center;">
+    <div class="center">
       <button onclick="openCategory('${currentCategory}')">⬅ 返回列表</button>
     </div>
 
@@ -207,7 +228,7 @@ function openSOP(i) {
       <button onclick="addStep()">新增</button>
     </div>
 
-    <div style="text-align:center;">
+    <div class="center">
       <button onclick="save()">💾 儲存全部</button>
     </div>
   `;
