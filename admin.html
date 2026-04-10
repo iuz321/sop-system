@@ -67,7 +67,7 @@ img {
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
-const PASSWORD = "1234";
+const PASSWORD = "4321";
 const categories = ["組立","電氣","測機","整備","打樣"];
 
 let data={}, currentCategory=null, currentIndex=null;
@@ -231,13 +231,15 @@ function openSOP(i){
   main.innerHTML=html;
 }
 
-// ===== 圖片上傳（修正）=====
+// ===== 圖片上傳（最終修正版）=====
 async function uploadImage(e,i){
-  const f=e.target.files[0];
+  const f = e.target.files[0];
   if(!f) return;
 
-  const r=new FileReader();
-  r.onload=async x=>{
+  const ext = f.name.split('.').pop();
+
+  const r = new FileReader();
+  r.onload = async x => {
     try{
       const base64 = x.target.result.split(",")[1];
 
@@ -245,7 +247,7 @@ async function uploadImage(e,i){
         method:"POST",
         headers:{ "Content-Type":"application/json" },
         body: JSON.stringify({
-          fileName: Date.now() + ".jpg",
+          fileName: Date.now() + "_" + Math.random().toString(36).substring(2) + "." + ext,
           content: base64
         })
       });
@@ -254,15 +256,15 @@ async function uploadImage(e,i){
 
       if(!json.url){
         alert("❌ 圖片上傳失敗");
-        console.error(json);
+        console.error("錯誤:", json);
         return;
       }
 
-      data[currentCategory][currentIndex].steps[i].image=json.url;
+      data[currentCategory][currentIndex].steps[i].image = json.url;
 
-      const img=document.getElementById("img_"+i);
-      img.src=json.url;
-      img.style.display="block";
+      const img = document.getElementById("img_"+i);
+      img.src = json.url;
+      img.style.display = "block";
 
     }catch(err){
       alert("❌ 上傳錯誤");
@@ -275,11 +277,13 @@ async function uploadImage(e,i){
 
 // ===== 新增圖片 =====
 async function uploadNewImage(e){
-  const f=e.target.files[0];
+  const f = e.target.files[0];
   if(!f) return;
 
-  const r=new FileReader();
-  r.onload=async x=>{
+  const ext = f.name.split('.').pop();
+
+  const r = new FileReader();
+  r.onload = async x => {
     try{
       const base64 = x.target.result.split(",")[1];
 
@@ -287,7 +291,7 @@ async function uploadNewImage(e){
         method:"POST",
         headers:{ "Content-Type":"application/json" },
         body: JSON.stringify({
-          fileName: Date.now() + ".jpg",
+          fileName: Date.now() + "_" + Math.random().toString(36).substring(2) + "." + ext,
           content: base64
         })
       });
@@ -296,14 +300,13 @@ async function uploadNewImage(e){
 
       if(!json.url){
         alert("❌ 圖片上傳失敗");
-        console.error(json);
+        console.error("錯誤:", json);
         return;
       }
 
-      newImageUrl=json.url;
-
-      previewNew.src=newImageUrl;
-      previewNew.style.display="block";
+      newImageUrl = json.url;
+      previewNew.src = newImageUrl;
+      previewNew.style.display = "block";
 
     }catch(err){
       alert("❌ 上傳錯誤");
@@ -317,10 +320,8 @@ async function uploadNewImage(e){
 // ===== 刪除圖片 =====
 function removeImage(i){
   if(!confirm("確定刪除圖片？")) return;
-
   data[currentCategory][currentIndex].steps[i].image="";
-  const img=document.getElementById("img_"+i);
-  img.style.display="none";
+  document.getElementById("img_"+i).style.display="none";
 }
 
 // ===== 步驟 =====
