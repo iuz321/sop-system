@@ -6,101 +6,64 @@
 
 <style>
 body {
-  font-family: "Segoe UI", Arial;
-  background:#f3f6f9;
+  font-family: Arial;
+  background: linear-gradient(135deg, #d0eaff, #e8f6ff);
+  display:flex;
+  justify-content:center;
+  padding:30px;
   margin:0;
 }
 
-/* Header */
-.header {
-  height:60px;
+.container {
+  width:800px;
   background:white;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 20px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.05);
+  padding:30px;
+  border-radius:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.1);
 }
 
-.header .title {
-  font-weight:bold;
-  font-size:16px;
-}
+h1 { text-align:center; }
+.center { text-align:center; }
 
-/* 主內容 */
-#app {
-  max-width:1000px;
-  margin:20px auto;
-}
-
-/* 卡片 */
-.card {
-  background:white;
-  padding:15px;
-  margin-bottom:12px;
-  border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.05);
-}
-
-/* 按鈕 */
 button {
-  background:#2563eb;
-  color:white;
+  margin:6px;
+  padding:10px 16px;
   border:none;
-  padding:8px 14px;
-  border-radius:6px;
+  border-radius:10px;
   cursor:pointer;
-  margin:4px;
+  background:#e3f2ff;
 }
 
-button:hover {
-  background:#1d4ed8;
+button:hover { background:#cde7ff; }
+
+.card {
+  background:#f9fbff;
+  padding:15px;
+  margin-bottom:10px;
+  border-radius:10px;
 }
 
-/* 刪除按鈕 */
-button[onclick*="delete"] {
-  background:#ef4444;
-}
-button[onclick*="delete"]:hover {
-  background:#dc2626;
-}
-
-/* 返回按鈕 */
-button[onclick*="back"], button[onclick*="showCategories"] {
-  background:#64748b;
-}
-
-/* 輸入 */
 input, textarea {
   width:100%;
   padding:8px;
-  margin:6px 0;
+  margin:5px 0;
   border-radius:6px;
   border:1px solid #ccc;
 }
 
-/* 圖片 */
 img {
   max-width:200px;
   margin-top:10px;
   border-radius:6px;
 }
+
+.error { color:red; margin-top:10px; }
 </style>
+
 </head>
 
 <body>
-
-<!-- Header（只新增這個，不影響功能） -->
-<div class="header">
-  <div class="title">🛠 SOP 管理後台</div>
-  <div>
-    <button onclick="location.href='index.html'">🏠 首頁</button>
-    <button onclick="logout()">登出</button>
-  </div>
-</div>
-
-<!-- 原本系統 -->
-<div id="app"></div>
+<div class="container" id="app"></div>
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
@@ -116,9 +79,11 @@ function checkLogin(){
 
   app.innerHTML=`
     <h1>🔐 管理登入</h1>
-    <div>
+    <div class="center">
       <input type="password" id="pwd">
-      <button onclick="login()">登入</button>
+      <div id="errorMsg" class="error"></div>
+      <button onclick="login()">登入</button><br><br>
+      <button onclick="goHome()">🏠 返回首頁</button>
     </div>`;
 }
 
@@ -126,13 +91,23 @@ function login(){
   if(pwd.value===PASSWORD){
     localStorage.setItem("login","true");
     initApp();
-  }else alert("❌ 密碼錯誤");
+  }else{
+    errorMsg.innerText="❌ 密碼錯誤";
+  }
 }
 
 function logout(){ localStorage.removeItem("login"); location.reload();}
+function goHome(){ location.href="index.html"; }
 
 // ===== 主系統 =====
 async function initApp(){
+  app.innerHTML=`
+    <h1>🛠 SOP 管理</h1>
+    <div class="center">
+      <a href="index.html">🏠 回首頁</a>
+      <button onclick="logout()">登出</button>
+    </div>
+    <div id="main"></div>`;
   await load();
 }
 
@@ -146,21 +121,36 @@ async function load(){
 
 // ===== 分類 =====
 function showCategories(){
-  let html="<h2>選擇分類</h2>";
+  let html="<h2 class='center'>選擇分類</h2><div class='center'>";
   categories.forEach(c=>{
     html+=`<button onclick="openCategory('${c}')">${c}</button>`;
   });
-  app.innerHTML=html;
+  html+="</div>";
+  main.innerHTML=html;
 }
 
 // ===== SOP列表 =====
 function openCategory(cat){
   currentCategory=cat;
 
-  let html=`<h2>${cat}</h2>
-  <button onclick="showCategories()">⬅ 返回</button>`;
+  main.innerHTML=`
+    <h2 class="center">📂 ${cat}</h2>
+    <div class="center"><button onclick="showCategories()">⬅ 返回</button></div>
+    <input id="searchBox" placeholder="🔍 搜尋" oninput="renderList()">
+    <div id="list"></div>
+    <div class="center"><button onclick="addSOP()">➕ 新增SOP</button></div>
+  `;
 
-  data[cat].forEach((s,i)=>{
+  renderList();
+}
+
+function renderList(){
+  const kw=(searchBox.value||"").toLowerCase();
+  let html="";
+
+  data[currentCategory].forEach((s,i)=>{
+    if(s.title && !s.title.toLowerCase().includes(kw)) return;
+
     html+=`
       <div class="card">
         <b>${s.title||"未命名"}</b><br><br>
@@ -169,21 +159,20 @@ function openCategory(cat){
       </div>`;
   });
 
-  html+=`<button onclick="addSOP()">➕ 新增SOP</button>`;
-
-  app.innerHTML=html;
+  list.innerHTML=html;
 }
 
+// ===== SOP =====
 function addSOP(){
   data[currentCategory].push({title:"新SOP",steps:[]});
-  openCategory(currentCategory);
+  renderList();
 }
 
 async function deleteSOP(i){
-  if(!confirm("確定刪除？")) return;
+  if(!confirm("確定刪除這個SOP？")) return;
   data[currentCategory].splice(i,1);
   await saveData();
-  openCategory(currentCategory);
+  renderList();
 }
 
 // ===== 編輯 =====
@@ -193,8 +182,10 @@ function openSOP(i){
   if(!sop.steps) sop.steps=[];
 
   let html=`
-    <h2>編輯 SOP</h2>
-    <button onclick="openCategory('${currentCategory}')">⬅ 返回</button>
+    <h2 class="center">✏ 編輯 SOP</h2>
+    <div class="center">
+      <button onclick="openCategory('${currentCategory}')">⬅ 返回</button>
+    </div>
 
     <input value="${sop.title||""}" 
       onchange="data['${currentCategory}'][${i}].title=this.value">
@@ -218,6 +209,7 @@ function openSOP(i){
           style="${st.image?'':'display:none;'}">
 
         <br>
+        <button onclick="removeImage(${idx})">🗑 刪除圖片</button>
         <button onclick="deleteStep(${idx})">❌ 刪除步驟</button>
       </div>`;
   });
@@ -231,80 +223,87 @@ function openSOP(i){
       <button onclick="addStep()">新增</button>
     </div>
 
-    <button onclick="save()">💾 儲存</button>
+    <div class="center">
+      <button onclick="save()">💾 儲存</button>
+    </div>
   `;
 
-  app.innerHTML=html;
+  main.innerHTML=html;
 }
 
-// =====（以下維持你原本功能，不動）=====
+// ===== 圖片上傳 =====
 async function uploadImage(e,i){
-  const f = e.target.files[0];
+  const f=e.target.files[0];
   if(!f) return;
 
-  const ext = f.name.split('.').pop();
-  const r = new FileReader();
+  const r=new FileReader();
+  r.onload=async x=>{
 
-  r.onload = async x => {
     const base64 = x.target.result.split(",")[1];
 
     const res = await fetch(API + "/upload-image",{
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({
-        fileName: Date.now()+"."+ext,
+        fileName: Date.now() + ".jpg",
         content: base64
       })
     });
 
-    const text = await res.text();
-    let json;
-    try{ json = JSON.parse(text); }catch{ alert(text); return; }
+    const json = await res.json();
 
-    const url = json.content.download_url;
-    data[currentCategory][currentIndex].steps[i].image = url;
+    data[currentCategory][currentIndex].steps[i].image=json.url;
 
-    const img = document.getElementById("img_"+i);
-    img.src = url;
-    img.style.display = "block";
+    const img=document.getElementById("img_"+i);
+    img.src=json.url;
+    img.style.display="block";
   };
 
   r.readAsDataURL(f);
 }
 
+// ===== 新增圖片 =====
 async function uploadNewImage(e){
-  const f = e.target.files[0];
+  const f=e.target.files[0];
   if(!f) return;
 
-  const ext = f.name.split('.').pop();
-  const r = new FileReader();
+  const r=new FileReader();
+  r.onload=async x=>{
 
-  r.onload = async x => {
     const base64 = x.target.result.split(",")[1];
 
     const res = await fetch(API + "/upload-image",{
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({
-        fileName: Date.now()+"."+ext,
+        fileName: Date.now() + ".jpg",
         content: base64
       })
     });
 
-    const text = await res.text();
-    let json;
-    try{ json = JSON.parse(text); }catch{ alert(text); return; }
+    const json = await res.json();
 
-    newImageUrl = json.content.download_url;
-    previewNew.src = newImageUrl;
-    previewNew.style.display = "block";
+    newImageUrl=json.url;
+
+    previewNew.src=newImageUrl;
+    previewNew.style.display="block";
   };
 
   r.readAsDataURL(f);
 }
 
-function deleteStep(i){
+// ===== 其他 =====
+function removeImage(i){
+  if(!confirm("確定刪除圖片？")) return;
+
+  data[currentCategory][currentIndex].steps[i].image="";
+  const img=document.getElementById("img_"+i);
+  img.style.display="none";
+}
+
+async function deleteStep(i){
   data[currentCategory][currentIndex].steps.splice(i,1);
+  await saveData();
   openSOP(currentIndex);
 }
 
@@ -314,16 +313,13 @@ function addStep(){
     desc:newDesc.value,
     image:newImageUrl
   });
+
   newImageUrl="";
   openSOP(currentIndex);
 }
 
 async function save(){
-  await fetch(API,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(data)
-  });
+  await saveData();
   alert("✅ 已儲存");
   openCategory(currentCategory);
 }
