@@ -56,8 +56,6 @@ img {
   margin-top:10px;
   border-radius:6px;
 }
-
-.error { color:red; margin-top:10px; }
 </style>
 
 </head>
@@ -67,7 +65,7 @@ img {
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
-const PASSWORD = "4321";
+const PASSWORD = "1234";
 const categories = ["組立","電氣","測機","整備","打樣"];
 
 let data={}, currentCategory=null, currentIndex=null;
@@ -81,9 +79,7 @@ function checkLogin(){
     <h1>🔐 管理登入</h1>
     <div class="center">
       <input type="password" id="pwd">
-      <div id="errorMsg" class="error"></div>
-      <button onclick="login()">登入</button><br><br>
-      <button onclick="goHome()">🏠 返回首頁</button>
+      <button onclick="login()">登入</button>
     </div>`;
 }
 
@@ -91,13 +87,10 @@ function login(){
   if(pwd.value===PASSWORD){
     localStorage.setItem("login","true");
     initApp();
-  }else{
-    errorMsg.innerText="❌ 密碼錯誤";
-  }
+  }else alert("❌ 密碼錯誤");
 }
 
 function logout(){ localStorage.removeItem("login"); location.reload();}
-function goHome(){ location.href="index.html"; }
 
 // ===== 主系統 =====
 async function initApp(){
@@ -136,7 +129,6 @@ function openCategory(cat){
   main.innerHTML=`
     <h2 class="center">📂 ${cat}</h2>
     <div class="center"><button onclick="showCategories()">⬅ 返回</button></div>
-    <input id="searchBox" placeholder="🔍 搜尋" oninput="renderList()">
     <div id="list"></div>
     <div class="center"><button onclick="addSOP()">➕ 新增SOP</button></div>
   `;
@@ -145,12 +137,8 @@ function openCategory(cat){
 }
 
 function renderList(){
-  const kw=(searchBox.value||"").toLowerCase();
   let html="";
-
   data[currentCategory].forEach((s,i)=>{
-    if(s.title && !s.title.toLowerCase().includes(kw)) return;
-
     html+=`
       <div class="card">
         <b>${s.title||"未命名"}</b><br><br>
@@ -158,18 +146,16 @@ function renderList(){
         <button onclick="deleteSOP(${i})">🗑 刪除</button>
       </div>`;
   });
-
   list.innerHTML=html;
 }
 
-// ===== SOP =====
 function addSOP(){
   data[currentCategory].push({title:"新SOP",steps:[]});
   renderList();
 }
 
 async function deleteSOP(i){
-  if(!confirm("確定刪除這個SOP？")) return;
+  if(!confirm("確定刪除？")) return;
   data[currentCategory].splice(i,1);
   await saveData();
   renderList();
@@ -209,7 +195,6 @@ function openSOP(i){
           style="${st.image?'':'display:none;'}">
 
         <br>
-        <button onclick="removeImage(${idx})">🗑 刪除圖片</button>
         <button onclick="deleteStep(${idx})">❌ 刪除步驟</button>
       </div>`;
   });
@@ -231,7 +216,7 @@ function openSOP(i){
   main.innerHTML=html;
 }
 
-// ===== 圖片上傳（最終修正版）=====
+// ===== 🔥 圖片上傳（最終版）=====
 async function uploadImage(e,i){
   const f = e.target.files[0];
   if(!f) return;
@@ -240,36 +225,42 @@ async function uploadImage(e,i){
 
   const r = new FileReader();
   r.onload = async x => {
+
+    const base64 = x.target.result.split(",")[1];
+
+    const res = await fetch(API + "/upload-image",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({
+        fileName: Date.now()+"_"+Math.random().toString(36).slice(2)+"."+ext,
+        content: base64
+      })
+    });
+
+    const text = await res.text();
+
+    let json;
     try{
-      const base64 = x.target.result.split(",")[1];
-
-      const res = await fetch(API + "/upload-image",{
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({
-          fileName: Date.now() + "_" + Math.random().toString(36).substring(2) + "." + ext,
-          content: base64
-        })
-      });
-
-      const json = await res.json();
-
-      if(!json.url){
-        alert("❌ 圖片上傳失敗");
-        console.error("錯誤:", json);
-        return;
-      }
-
-      data[currentCategory][currentIndex].steps[i].image = json.url;
-
-      const img = document.getElementById("img_"+i);
-      img.src = json.url;
-      img.style.display = "block";
-
-    }catch(err){
-      alert("❌ 上傳錯誤");
-      console.error(err);
+      json = JSON.parse(text);
+    }catch{
+      alert("❌ 上傳失敗\n\n" + text);
+      console.error(text);
+      return;
     }
+
+    if(!json.content || !json.content.download_url){
+      alert("❌ 上傳失敗\n\n" + text);
+      console.error(json);
+      return;
+    }
+
+    const url = json.content.download_url;
+
+    data[currentCategory][currentIndex].steps[i].image = url;
+
+    const img = document.getElementById("img_"+i);
+    img.src = url;
+    img.style.display = "block";
   };
 
   r.readAsDataURL(f);
@@ -284,50 +275,39 @@ async function uploadNewImage(e){
 
   const r = new FileReader();
   r.onload = async x => {
+
+    const base64 = x.target.result.split(",")[1];
+
+    const res = await fetch(API + "/upload-image",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({
+        fileName: Date.now()+"_"+Math.random().toString(36).slice(2)+"."+ext,
+        content: base64
+      })
+    });
+
+    const text = await res.text();
+
+    let json;
     try{
-      const base64 = x.target.result.split(",")[1];
-
-      const res = await fetch(API + "/upload-image",{
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({
-          fileName: Date.now() + "_" + Math.random().toString(36).substring(2) + "." + ext,
-          content: base64
-        })
-      });
-
-      const json = await res.json();
-
-      if(!json.url){
-        alert("❌ 圖片上傳失敗");
-        console.error("錯誤:", json);
-        return;
-      }
-
-      newImageUrl = json.url;
-      previewNew.src = newImageUrl;
-      previewNew.style.display = "block";
-
-    }catch(err){
-      alert("❌ 上傳錯誤");
-      console.error(err);
+      json = JSON.parse(text);
+    }catch{
+      alert("❌ 上傳失敗\n\n" + text);
+      return;
     }
+
+    newImageUrl = json.content.download_url;
+    previewNew.src = newImageUrl;
+    previewNew.style.display = "block";
   };
 
   r.readAsDataURL(f);
 }
 
-// ===== 刪除圖片 =====
-function removeImage(i){
-  if(!confirm("確定刪除圖片？")) return;
-  data[currentCategory][currentIndex].steps[i].image="";
-  document.getElementById("img_"+i).style.display="none";
-}
-
 // ===== 步驟 =====
-async function deleteStep(i){
+function deleteStep(i){
   data[currentCategory][currentIndex].steps.splice(i,1);
-  await saveData();
   openSOP(currentIndex);
 }
 
@@ -337,14 +317,17 @@ function addStep(){
     desc:newDesc.value,
     image:newImageUrl
   });
-
   newImageUrl="";
   openSOP(currentIndex);
 }
 
 // ===== 儲存 =====
 async function save(){
-  await saveData();
+  await fetch(API,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(data)
+  });
   alert("✅ 已儲存");
   openCategory(currentCategory);
 }
