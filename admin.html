@@ -6,50 +6,9 @@
 
 <style>
 body {
-  margin:0;
   font-family: "Segoe UI", Arial;
   background:#f3f6f9;
-}
-
-/* ===== Layout ===== */
-.layout {
-  display:flex;
-  height:100vh;
-}
-
-/* Sidebar */
-.sidebar {
-  width:220px;
-  background:#1e293b;
-  color:white;
-  padding:20px;
-}
-
-.sidebar h2 {
-  font-size:18px;
-  margin-bottom:20px;
-}
-
-.sidebar button {
-  width:100%;
-  margin:6px 0;
-  padding:10px;
-  border:none;
-  background:#334155;
-  color:white;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-.sidebar button:hover {
-  background:#475569;
-}
-
-/* Main */
-.main {
-  flex:1;
-  display:flex;
-  flex-direction:column;
+  margin:0;
 }
 
 /* Header */
@@ -65,58 +24,62 @@ body {
 
 .header .title {
   font-weight:bold;
+  font-size:16px;
 }
 
-.header button {
-  padding:6px 12px;
-  border:none;
-  background:#e2e8f0;
-  border-radius:6px;
-  cursor:pointer;
+/* 主內容 */
+#app {
+  max-width:1000px;
+  margin:20px auto;
 }
 
-/* Content */
-.content {
-  padding:20px;
-  overflow:auto;
-}
-
-/* Card */
+/* 卡片 */
 .card {
   background:white;
   padding:15px;
-  margin-bottom:10px;
+  margin-bottom:12px;
   border-radius:10px;
   box-shadow:0 2px 6px rgba(0,0,0,0.05);
 }
 
-/* Inputs */
+/* 按鈕 */
+button {
+  background:#2563eb;
+  color:white;
+  border:none;
+  padding:8px 14px;
+  border-radius:6px;
+  cursor:pointer;
+  margin:4px;
+}
+
+button:hover {
+  background:#1d4ed8;
+}
+
+/* 刪除按鈕 */
+button[onclick*="delete"] {
+  background:#ef4444;
+}
+button[onclick*="delete"]:hover {
+  background:#dc2626;
+}
+
+/* 返回按鈕 */
+button[onclick*="back"], button[onclick*="showCategories"] {
+  background:#64748b;
+}
+
+/* 輸入 */
 input, textarea {
   width:100%;
   padding:8px;
-  margin:5px 0;
+  margin:6px 0;
   border-radius:6px;
   border:1px solid #ccc;
 }
 
-/* Buttons */
-.btn {
-  padding:8px 12px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-.btn-blue {
-  background:#2563eb;
-  color:white;
-}
-
-.btn-red {
-  background:#ef4444;
-  color:white;
-}
-
+/* 圖片 */
 img {
   max-width:200px;
   margin-top:10px;
@@ -127,32 +90,17 @@ img {
 
 <body>
 
-<div class="layout">
-
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <h2>🛠 SOP 系統</h2>
-    <div id="sidebarMenu"></div>
+<!-- Header（只新增這個，不影響功能） -->
+<div class="header">
+  <div class="title">🛠 SOP 管理後台</div>
+  <div>
+    <button onclick="location.href='index.html'">🏠 首頁</button>
+    <button onclick="logout()">登出</button>
   </div>
-
-  <!-- Main -->
-  <div class="main">
-
-    <!-- Header -->
-    <div class="header">
-      <div class="title">SOP 管理後台</div>
-      <div>
-        <button onclick="location.href='index.html'">🏠 首頁</button>
-        <button onclick="logout()">登出</button>
-      </div>
-    </div>
-
-    <!-- Content -->
-    <div class="content" id="app"></div>
-
-  </div>
-
 </div>
+
+<!-- 原本系統 -->
+<div id="app"></div>
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
@@ -162,41 +110,26 @@ const categories = ["組立","電氣","測機","整備","打樣"];
 let data={}, currentCategory=null, currentIndex=null;
 let newImageUrl="";
 
-// ===== Sidebar =====
-function renderSidebar(){
-  let html="";
-  categories.forEach(c=>{
-    html += `<button onclick="openCategory('${c}')">${c}</button>`;
-  });
-  sidebarMenu.innerHTML = html;
-}
-
 // ===== 登入 =====
 function checkLogin(){
-  if(localStorage.getItem("login")==="true"){
-    renderSidebar();
-    initApp();
-    return;
-  }
+  if(localStorage.getItem("login")==="true"){ initApp(); return; }
+
   app.innerHTML=`
-    <div class="card">
-      <h2>登入</h2>
+    <h1>🔐 管理登入</h1>
+    <div>
       <input type="password" id="pwd">
-      <button class="btn btn-blue" onclick="login()">登入</button>
+      <button onclick="login()">登入</button>
     </div>`;
 }
 
 function login(){
   if(pwd.value===PASSWORD){
     localStorage.setItem("login","true");
-    location.reload();
-  }else alert("錯誤");
+    initApp();
+  }else alert("❌ 密碼錯誤");
 }
 
-function logout(){
-  localStorage.removeItem("login");
-  location.reload();
-}
+function logout(){ localStorage.removeItem("login"); location.reload();}
 
 // ===== 主系統 =====
 async function initApp(){
@@ -211,27 +144,32 @@ async function load(){
   showCategories();
 }
 
-// ===== 顯示分類 =====
+// ===== 分類 =====
 function showCategories(){
-  app.innerHTML="<div class='card'>請選擇左側分類</div>";
+  let html="<h2>選擇分類</h2>";
+  categories.forEach(c=>{
+    html+=`<button onclick="openCategory('${c}')">${c}</button>`;
+  });
+  app.innerHTML=html;
 }
 
 // ===== SOP列表 =====
 function openCategory(cat){
   currentCategory=cat;
 
-  let html=`<h2>${cat}</h2>`;
+  let html=`<h2>${cat}</h2>
+  <button onclick="showCategories()">⬅ 返回</button>`;
 
   data[cat].forEach((s,i)=>{
     html+=`
       <div class="card">
-        <b>${s.title}</b><br><br>
-        <button class="btn btn-blue" onclick="openSOP(${i})">編輯</button>
-        <button class="btn btn-red" onclick="deleteSOP(${i})">刪除</button>
+        <b>${s.title||"未命名"}</b><br><br>
+        <button onclick="openSOP(${i})">✏ 編輯</button>
+        <button onclick="deleteSOP(${i})">🗑 刪除</button>
       </div>`;
   });
 
-  html+=`<button class="btn btn-blue" onclick="addSOP()">新增SOP</button>`;
+  html+=`<button onclick="addSOP()">➕ 新增SOP</button>`;
 
   app.innerHTML=html;
 }
@@ -252,30 +190,141 @@ async function deleteSOP(i){
 function openSOP(i){
   currentIndex=i;
   const sop=data[currentCategory][i];
+  if(!sop.steps) sop.steps=[];
 
-  let html=`<h2>編輯 ${sop.title}</h2>`;
+  let html=`
+    <h2>編輯 SOP</h2>
+    <button onclick="openCategory('${currentCategory}')">⬅ 返回</button>
+
+    <input value="${sop.title||""}" 
+      onchange="data['${currentCategory}'][${i}].title=this.value">
+
+    <hr>
+  `;
 
   sop.steps.forEach((st,idx)=>{
     html+=`
       <div class="card">
-        <input value="${st.title}" onchange="data[currentCategory][${i}].steps[${idx}].title=this.value">
-        <textarea onchange="data[currentCategory][${i}].steps[${idx}].desc=this.value">${st.desc}</textarea>
+        <input value="${st.title||""}" 
+          onchange="data['${currentCategory}'][${i}].steps[${idx}].title=this.value">
+
+        <textarea 
+          onchange="data['${currentCategory}'][${i}].steps[${idx}].desc=this.value"
+        >${st.desc||""}</textarea>
+
+        <input type="file" onchange="uploadImage(event,${idx})">
+
+        <img id="img_${idx}" src="${st.image||""}" 
+          style="${st.image?'':'display:none;'}">
+
+        <br>
+        <button onclick="deleteStep(${idx})">❌ 刪除步驟</button>
       </div>`;
   });
 
-  html+=`<button class="btn btn-blue" onclick="save()">儲存</button>`;
+  html+=`
+    <div class="card">
+      <input id="newTitle" placeholder="標題">
+      <textarea id="newDesc"></textarea>
+      <input type="file" onchange="uploadNewImage(event)">
+      <img id="previewNew" style="display:none;">
+      <button onclick="addStep()">新增</button>
+    </div>
+
+    <button onclick="save()">💾 儲存</button>
+  `;
 
   app.innerHTML=html;
 }
 
-// ===== 儲存 =====
+// =====（以下維持你原本功能，不動）=====
+async function uploadImage(e,i){
+  const f = e.target.files[0];
+  if(!f) return;
+
+  const ext = f.name.split('.').pop();
+  const r = new FileReader();
+
+  r.onload = async x => {
+    const base64 = x.target.result.split(",")[1];
+
+    const res = await fetch(API + "/upload-image",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({
+        fileName: Date.now()+"."+ext,
+        content: base64
+      })
+    });
+
+    const text = await res.text();
+    let json;
+    try{ json = JSON.parse(text); }catch{ alert(text); return; }
+
+    const url = json.content.download_url;
+    data[currentCategory][currentIndex].steps[i].image = url;
+
+    const img = document.getElementById("img_"+i);
+    img.src = url;
+    img.style.display = "block";
+  };
+
+  r.readAsDataURL(f);
+}
+
+async function uploadNewImage(e){
+  const f = e.target.files[0];
+  if(!f) return;
+
+  const ext = f.name.split('.').pop();
+  const r = new FileReader();
+
+  r.onload = async x => {
+    const base64 = x.target.result.split(",")[1];
+
+    const res = await fetch(API + "/upload-image",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({
+        fileName: Date.now()+"."+ext,
+        content: base64
+      })
+    });
+
+    const text = await res.text();
+    let json;
+    try{ json = JSON.parse(text); }catch{ alert(text); return; }
+
+    newImageUrl = json.content.download_url;
+    previewNew.src = newImageUrl;
+    previewNew.style.display = "block";
+  };
+
+  r.readAsDataURL(f);
+}
+
+function deleteStep(i){
+  data[currentCategory][currentIndex].steps.splice(i,1);
+  openSOP(currentIndex);
+}
+
+function addStep(){
+  data[currentCategory][currentIndex].steps.push({
+    title:newTitle.value,
+    desc:newDesc.value,
+    image:newImageUrl
+  });
+  newImageUrl="";
+  openSOP(currentIndex);
+}
+
 async function save(){
   await fetch(API,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify(data)
   });
-  alert("已儲存");
+  alert("✅ 已儲存");
   openCategory(currentCategory);
 }
 
