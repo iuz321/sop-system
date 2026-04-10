@@ -32,28 +32,7 @@
   "ææ¨£": [],
   "組立": [],
   "電氣": [],
-  "測機": [
-    {
-      "title": "我的第一次",
-      "steps": [
-        {
-          "title": "第一次",
-          "desc": "第一個",
-          "image": "https://raw.githubusercontent.com/iuz321/sop-system/main/images/1775806229802.jpg"
-        },
-        {
-          "title": "第二次",
-          "desc": "第二個",
-          "image": "https://raw.githubusercontent.com/iuz321/sop-system/main/images/1775806237398.jpg"
-        },
-        {
-          "title": "第三次",
-          "desc": "第三個",
-          "image": "https://raw.githubusercontent.com/iuz321/sop-system/main/images/1775806244043.jpg"
-        }
-      ]
-    }
-  ],
+  "測機": [],
   "整備": [],
   "打樣": []
 }
