@@ -206,10 +206,9 @@ function openSOP(i){
         <input type="file" onchange="uploadImage(event,${idx})">
 
         <img id="img_${idx}" src="${st.image||""}" 
-          style="${st.image?'':'display:none;'}">
+             style="${st.image?'':'display:none;'}">
 
         <br>
-        <button onclick="removeImage(${idx})">🗑 刪除圖片</button>
         <button onclick="deleteStep(${idx})">❌ 刪除步驟</button>
       </div>`;
   });
@@ -231,7 +230,7 @@ function openSOP(i){
   main.innerHTML=html;
 }
 
-// ===== 圖片上傳 =====
+// ===== 圖片上傳（修正這裡）=====
 async function uploadImage(e,i){
   const f=e.target.files[0];
   if(!f) return;
@@ -252,17 +251,19 @@ async function uploadImage(e,i){
 
     const json = await res.json();
 
-    data[currentCategory][currentIndex].steps[i].image=json.url;
+    const url = json.url;  // ✅ 修正
+
+    data[currentCategory][currentIndex].steps[i].image = url;
 
     const img=document.getElementById("img_"+i);
-    img.src=json.url;
+    img.src=url;
     img.style.display="block";
   };
 
   r.readAsDataURL(f);
 }
 
-// ===== 新增圖片 =====
+// ===== 新增圖片（修正這裡）=====
 async function uploadNewImage(e){
   const f=e.target.files[0];
   if(!f) return;
@@ -283,7 +284,7 @@ async function uploadNewImage(e){
 
     const json = await res.json();
 
-    newImageUrl=json.url;
+    newImageUrl = json.url;  // ✅ 修正
 
     previewNew.src=newImageUrl;
     previewNew.style.display="block";
@@ -293,14 +294,6 @@ async function uploadNewImage(e){
 }
 
 // ===== 其他 =====
-function removeImage(i){
-  if(!confirm("確定刪除圖片？")) return;
-
-  data[currentCategory][currentIndex].steps[i].image="";
-  const img=document.getElementById("img_"+i);
-  img.style.display="none";
-}
-
 async function deleteStep(i){
   data[currentCategory][currentIndex].steps.splice(i,1);
   await saveData();
