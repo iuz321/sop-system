@@ -65,7 +65,7 @@ img {
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
-const PASSWORD = "3686368";
+const PASSWORD = "1234";
 const categories = ["組立","電氣","測機","整備","打樣"];
 
 let data={}, currentCategory=null, currentIndex=null;
@@ -78,7 +78,10 @@ function checkLogin(){
     <h1>🔐 管理登入</h1>
     <div class="center">
       <input type="password" id="pwd">
+      <br><br>
       <button onclick="login()">登入</button>
+      <br><br>
+      <button onclick="goHome()">🏠 返回首頁</button>
     </div>`;
 }
 
@@ -89,7 +92,14 @@ function login(){
   }else alert("❌ 密碼錯誤");
 }
 
-function logout(){ localStorage.removeItem("login"); location.reload(); }
+function goHome(){
+  location.href="index.html";
+}
+
+function logout(){
+  localStorage.removeItem("login");
+  location.reload();
+}
 
 async function initApp(){
   app.innerHTML=`
