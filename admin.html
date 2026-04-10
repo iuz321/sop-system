@@ -56,8 +56,6 @@ img {
   margin-top:10px;
   border-radius:6px;
 }
-
-.error { color:red; margin-top:10px; }
 </style>
 
 </head>
@@ -67,13 +65,12 @@ img {
 
 <script>
 const API = "https://black-scene-3fcf.fu-jinmin.workers.dev";
-const PASSWORD = "1234";
+const PASSWORD = "3686368";
 const categories = ["組立","電氣","測機","整備","打樣"];
 
 let data={}, currentCategory=null, currentIndex=null;
 let newImageUrl="";
 
-// ===== 登入 =====
 function checkLogin(){
   if(localStorage.getItem("login")==="true"){ initApp(); return; }
 
@@ -81,9 +78,7 @@ function checkLogin(){
     <h1>🔐 管理登入</h1>
     <div class="center">
       <input type="password" id="pwd">
-      <div id="errorMsg" class="error"></div>
-      <button onclick="login()">登入</button><br><br>
-      <button onclick="goHome()">🏠 返回首頁</button>
+      <button onclick="login()">登入</button>
     </div>`;
 }
 
@@ -91,15 +86,11 @@ function login(){
   if(pwd.value===PASSWORD){
     localStorage.setItem("login","true");
     initApp();
-  }else{
-    errorMsg.innerText="❌ 密碼錯誤";
-  }
+  }else alert("❌ 密碼錯誤");
 }
 
-function logout(){ localStorage.removeItem("login"); location.reload();}
-function goHome(){ location.href="index.html"; }
+function logout(){ localStorage.removeItem("login"); location.reload(); }
 
-// ===== 主系統 =====
 async function initApp(){
   app.innerHTML=`
     <h1>🛠 SOP 管理</h1>
@@ -111,7 +102,6 @@ async function initApp(){
   await load();
 }
 
-// ===== 載入 =====
 async function load(){
   const res=await fetch(API);
   data=await res.json();
@@ -119,7 +109,6 @@ async function load(){
   showCategories();
 }
 
-// ===== 分類 =====
 function showCategories(){
   let html="<h2 class='center'>選擇分類</h2><div class='center'>";
   categories.forEach(c=>{
@@ -129,53 +118,42 @@ function showCategories(){
   main.innerHTML=html;
 }
 
-// ===== SOP列表 =====
 function openCategory(cat){
   currentCategory=cat;
-
   main.innerHTML=`
     <h2 class="center">📂 ${cat}</h2>
     <div class="center"><button onclick="showCategories()">⬅ 返回</button></div>
-    <input id="searchBox" placeholder="🔍 搜尋" oninput="renderList()">
     <div id="list"></div>
     <div class="center"><button onclick="addSOP()">➕ 新增SOP</button></div>
   `;
-
   renderList();
 }
 
 function renderList(){
-  const kw=(searchBox.value||"").toLowerCase();
   let html="";
-
   data[currentCategory].forEach((s,i)=>{
-    if(s.title && !s.title.toLowerCase().includes(kw)) return;
-
     html+=`
       <div class="card">
-        <b>${s.title||"未命名"}</b><br><br>
+        <b>${s.title||"未命名"}</b><br>
         <button onclick="openSOP(${i})">✏ 編輯</button>
         <button onclick="deleteSOP(${i})">🗑 刪除</button>
       </div>`;
   });
-
   list.innerHTML=html;
 }
 
-// ===== SOP =====
 function addSOP(){
   data[currentCategory].push({title:"新SOP",steps:[]});
   renderList();
 }
 
 async function deleteSOP(i){
-  if(!confirm("確定刪除這個SOP？")) return;
+  if(!confirm("確定刪除？")) return;
   data[currentCategory].splice(i,1);
   await saveData();
   renderList();
 }
 
-// ===== 編輯 =====
 function openSOP(i){
   currentIndex=i;
   const sop=data[currentCategory][i];
@@ -189,7 +167,6 @@ function openSOP(i){
 
     <input value="${sop.title||""}" 
       onchange="data['${currentCategory}'][${i}].title=this.value">
-
     <hr>
   `;
 
@@ -203,10 +180,12 @@ function openSOP(i){
           onchange="data['${currentCategory}'][${i}].steps[${idx}].desc=this.value"
         >${st.desc||""}</textarea>
 
-        <input type="file" onchange="uploadImage(event,${idx})">
-
+        <!-- ✅ 預覽在上 -->
         <img id="img_${idx}" src="${st.image||""}" 
              style="${st.image?'':'display:none;'}">
+
+        <!-- ✅ 選檔在下 -->
+        <input type="file" onchange="uploadImage(event,${idx})">
 
         <br>
         <button onclick="deleteStep(${idx})">❌ 刪除步驟</button>
@@ -217,8 +196,11 @@ function openSOP(i){
     <div class="card">
       <input id="newTitle" placeholder="標題">
       <textarea id="newDesc"></textarea>
-      <input type="file" onchange="uploadNewImage(event)">
+
       <img id="previewNew" style="display:none;">
+
+      <input type="file" onchange="uploadNewImage(event)">
+
       <button onclick="addStep()">新增</button>
     </div>
 
@@ -230,70 +212,57 @@ function openSOP(i){
   main.innerHTML=html;
 }
 
-// ===== 圖片上傳（修正這裡）=====
 async function uploadImage(e,i){
   const f=e.target.files[0];
-  if(!f) return;
-
   const r=new FileReader();
   r.onload=async x=>{
+    const base64=x.target.result.split(",")[1];
 
-    const base64 = x.target.result.split(",")[1];
-
-    const res = await fetch(API + "/upload-image",{
+    const res=await fetch(API+"/upload-image",{
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({
-        fileName: Date.now() + ".jpg",
-        content: base64
+      body:JSON.stringify({
+        fileName:Date.now()+".jpg",
+        content:base64
       })
     });
 
-    const json = await res.json();
+    const json=await res.json();
+    const url=json.url;
 
-    const url = json.url;  // ✅ 修正
-
-    data[currentCategory][currentIndex].steps[i].image = url;
+    data[currentCategory][currentIndex].steps[i].image=url;
 
     const img=document.getElementById("img_"+i);
     img.src=url;
     img.style.display="block";
   };
-
   r.readAsDataURL(f);
 }
 
-// ===== 新增圖片（修正這裡）=====
 async function uploadNewImage(e){
   const f=e.target.files[0];
-  if(!f) return;
-
   const r=new FileReader();
   r.onload=async x=>{
+    const base64=x.target.result.split(",")[1];
 
-    const base64 = x.target.result.split(",")[1];
-
-    const res = await fetch(API + "/upload-image",{
+    const res=await fetch(API+"/upload-image",{
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({
-        fileName: Date.now() + ".jpg",
-        content: base64
+      body:JSON.stringify({
+        fileName:Date.now()+".jpg",
+        content:base64
       })
     });
 
-    const json = await res.json();
-
-    newImageUrl = json.url;  // ✅ 修正
+    const json=await res.json();
+    newImageUrl=json.url;
 
     previewNew.src=newImageUrl;
     previewNew.style.display="block";
   };
-
   r.readAsDataURL(f);
 }
 
-// ===== 其他 =====
 async function deleteStep(i){
   data[currentCategory][currentIndex].steps.splice(i,1);
   await saveData();
@@ -306,7 +275,6 @@ function addStep(){
     desc:newDesc.value,
     image:newImageUrl
   });
-
   newImageUrl="";
   openSOP(currentIndex);
 }
